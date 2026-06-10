@@ -20,6 +20,7 @@ import Components from './Components';
 import Reports from './Reports';
 import Pages from './Pages';
 import Summary from './Summary';
+import Import from './Import';
 import { ProjectPage } from './Styles';
 
 const Project = () => {
@@ -126,6 +127,11 @@ const Project = () => {
       <Route path={`${match.path}/pages`} render={() => <Pages />} />
 
       <Route path={`${match.path}/summary`} render={() => <Summary project={project} />} />
+
+      <Route
+        path={`${match.path}/import`}
+        render={() => <Import project={project} fetchProject={fetchProject} />}
+      />
 
       {match.isExact && <Redirect to={`${match.url}/summary`} />}
     </ProjectPage>
