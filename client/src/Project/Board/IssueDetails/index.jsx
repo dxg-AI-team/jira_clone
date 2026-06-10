@@ -15,6 +15,7 @@ import Status from './Status';
 import AssigneesReporter from './AssigneesReporter';
 import Priority from './Priority';
 import Version from './Version';
+import Components from './Components';
 import EstimateTracking from './EstimateTracking';
 import Dates from './Dates';
 import { TopActions, TopActionsRight, Content, Left, Right } from './Styles';
@@ -23,6 +24,7 @@ const propTypes = {
   issueId: PropTypes.string.isRequired,
   projectUsers: PropTypes.array.isRequired,
   projectVersions: PropTypes.array.isRequired,
+  projectComponents: PropTypes.array.isRequired,
   fetchProject: PropTypes.func.isRequired,
   updateLocalProjectIssues: PropTypes.func.isRequired,
   modalClose: PropTypes.func.isRequired,
@@ -32,6 +34,7 @@ const ProjectBoardIssueDetails = ({
   issueId,
   projectUsers,
   projectVersions,
+  projectComponents,
   fetchProject,
   updateLocalProjectIssues,
   modalClose,
@@ -85,6 +88,11 @@ const ProjectBoardIssueDetails = ({
           <AssigneesReporter issue={issue} updateIssue={updateIssue} projectUsers={projectUsers} />
           <Priority issue={issue} updateIssue={updateIssue} />
           <Version issue={issue} updateIssue={updateIssue} projectVersions={projectVersions} />
+          <Components
+            issue={issue}
+            updateIssue={updateIssue}
+            projectComponents={projectComponents}
+          />
           <EstimateTracking issue={issue} updateIssue={updateIssue} />
           <Dates issue={issue} />
         </Right>

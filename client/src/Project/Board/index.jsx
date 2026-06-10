@@ -58,6 +58,7 @@ const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
                 issueId={routeProps.match.params.issueId}
                 projectUsers={project.users}
                 projectVersions={project.versions}
+                projectComponents={project.components}
                 fetchProject={fetchProject}
                 updateLocalProjectIssues={updateLocalProjectIssues}
                 modalClose={modal.close}

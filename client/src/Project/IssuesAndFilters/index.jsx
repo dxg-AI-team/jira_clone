@@ -49,6 +49,7 @@ const defaultFilters = {
   priorities: [],
   userIds: [],
   versionId: null,
+  componentIds: [],
   sort: 'created-desc',
 };
 
@@ -92,7 +93,8 @@ const ProjectIssuesAndFilters = ({ project }) => {
     filters.statuses.length ||
     filters.priorities.length ||
     filters.userIds.length ||
-    filters.versionId;
+    filters.versionId ||
+    filters.componentIds.length;
 
   return (
     <Page>
@@ -156,6 +158,15 @@ const ProjectIssuesAndFilters = ({ project }) => {
         </FilterItem>
         <FilterItem>
           <Select
+            isMulti
+            placeholder="コンポーネント"
+            value={filters.componentIds}
+            options={(project.components || []).map(c => ({ value: c.id, label: c.name }))}
+            onChange={componentIds => mergeFilters({ componentIds })}
+          />
+        </FilterItem>
+        <FilterItem>
+          <Select
             withClearValue={false}
             value={filters.sort}
             options={sortOptions}
@@ -214,7 +225,16 @@ const ProjectIssuesAndFilters = ({ project }) => {
 };
 
 const filterAndSortIssues = (allIssues, filters) => {
-  const { searchTerm, types, statuses, priorities, userIds, versionId, sort } = filters;
+  const {
+    searchTerm,
+    types,
+    statuses,
+    priorities,
+    userIds,
+    versionId,
+    componentIds,
+    sort,
+  } = filters;
 
   let issues = allIssues;
 
@@ -235,6 +255,11 @@ const filterAndSortIssues = (allIssues, filters) => {
   }
   if (versionId) {
     issues = issues.filter(issue => issue.versionId === versionId);
+  }
+  if (componentIds.length) {
+    issues = issues.filter(
+      issue => intersection(issue.componentIds || [], componentIds).length > 0,
+    );
   }
 
   return [...issues].sort(sorters[sort] || sorters['created-desc']);

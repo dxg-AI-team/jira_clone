@@ -22,7 +22,7 @@ export const getProjectIssues = catchErrors(async (req, res) => {
 
 export const getIssueWithUsersAndComments = catchErrors(async (req, res) => {
   const issue = await findEntityOrThrow(Issue, req.params.issueId, {
-    relations: ['users', 'comments', 'comments.user'],
+    relations: ['users', 'comments', 'comments.user', 'components'],
   });
   res.respond({ issue });
 });

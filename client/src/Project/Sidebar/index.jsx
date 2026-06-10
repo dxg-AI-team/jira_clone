@@ -42,7 +42,7 @@ const ProjectSidebar = ({ project }) => {
       {renderLinkItem(match, '課題とフィルター', 'issues', '/issues')}
       {renderLinkItem(match, 'ページ', 'page')}
       {renderLinkItem(match, 'レポート', 'reports')}
-      {renderLinkItem(match, 'コンポーネント', 'component')}
+      {renderLinkItem(match, 'コンポーネント', 'component', '/components')}
     </Sidebar>
   );
 };

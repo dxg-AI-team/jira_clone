@@ -5,7 +5,7 @@ import { issuePartial } from 'serializers/issues';
 
 export const getProjectWithUsersAndIssues = catchErrors(async (req, res) => {
   const project = await findEntityOrThrow(Project, req.currentUser.projectId, {
-    relations: ['users', 'issues', 'versions'],
+    relations: ['users', 'issues', 'versions', 'components'],
   });
   res.respond({
     project: {

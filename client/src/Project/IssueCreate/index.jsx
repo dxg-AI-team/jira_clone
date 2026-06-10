@@ -46,6 +46,7 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
         userIds: [],
         priority: IssuePriority.MEDIUM,
         versionId: null,
+        componentIds: [],
       }}
       validations={{
         type: Form.is.required(),
@@ -60,6 +61,7 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
             status: IssueStatus.BACKLOG,
             projectId: project.id,
             users: values.userIds.map(id => ({ id })),
+            components: values.componentIds.map(id => ({ id })),
           });
           await fetchProject();
           toast.success('課題を作成しました。');
@@ -115,6 +117,17 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
             name="versionId"
             label="リリース"
             options={project.versions.map(version => ({ value: version.id, label: version.name }))}
+          />
+        )}
+        {project.components && project.components.length > 0 && (
+          <Form.Field.Select
+            isMulti
+            name="componentIds"
+            label="コンポーネント"
+            options={project.components.map(component => ({
+              value: component.id,
+              label: component.name,
+            }))}
           />
         )}
         <Actions>

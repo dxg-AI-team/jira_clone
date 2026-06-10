@@ -17,7 +17,7 @@ import {
 
 import is from 'utils/validation';
 import { IssueType, IssueStatus, IssuePriority } from 'constants/issues';
-import { Comment, Project, User, ProjectVersion } from '.';
+import { Comment, Project, User, ProjectVersion, Component } from '.';
 
 @Entity()
 class Issue extends BaseEntity {
@@ -106,6 +106,16 @@ class Issue extends BaseEntity {
 
   @RelationId((issue: Issue) => issue.users)
   userIds: number[];
+
+  @ManyToMany(
+    () => Component,
+    component => component.issues,
+  )
+  @JoinTable()
+  components: Component[];
+
+  @RelationId((issue: Issue) => issue.components)
+  componentIds: number[];
 
   @BeforeInsert()
   @BeforeUpdate()
