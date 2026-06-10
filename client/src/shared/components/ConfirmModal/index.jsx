@@ -17,10 +17,10 @@ const propTypes = {
 const defaultProps = {
   className: undefined,
   variant: 'primary',
-  title: 'Warning',
-  message: 'Are you sure you want to continue with this action?',
-  confirmText: 'Confirm',
-  cancelText: 'Cancel',
+  title: '警告',
+  message: 'この操作を続行してもよろしいですか？',
+  confirmText: '確認',
+  cancelText: 'キャンセル',
 };
 
 const ConfirmModal = ({

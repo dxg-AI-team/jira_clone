@@ -67,13 +67,13 @@ const ProjectBoardIssueDetailsComment = ({ comment, fetchIssue }) => {
         ) : (
           <Fragment>
             <Body>{comment.body}</Body>
-            <EditLink onClick={() => setFormOpen(true)}>Edit</EditLink>
+            <EditLink onClick={() => setFormOpen(true)}>編集</EditLink>
             <ConfirmModal
-              title="Are you sure you want to delete this comment?"
-              message="Once you delete, it's gone for good."
-              confirmText="Delete comment"
+              title="このコメントを削除してもよろしいですか？"
+              message="削除すると元に戻せません。"
+              confirmText="コメントを削除"
               onConfirm={handleCommentDelete}
-              renderLink={modal => <DeleteLink onClick={modal.open}>Delete</DeleteLink>}
+              renderLink={modal => <DeleteLink onClick={modal.open}>削除</DeleteLink>}
             />
           </Fragment>
         )}

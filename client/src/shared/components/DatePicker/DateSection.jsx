@@ -99,7 +99,7 @@ const DatePickerDateSection = ({ withTime, value, onChange, setDropdownOpen }) =
 const currentYear = moment().year();
 
 const generateYearOptions = () => [
-  { label: 'Year', value: '' },
+  { label: '年', value: '' },
   ...times(50, i => ({ label: `${i + currentYear - 10}`, value: `${i + currentYear - 10}` })),
 ];
 

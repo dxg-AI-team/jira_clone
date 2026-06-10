@@ -31,7 +31,7 @@ const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
 
   return (
     <Fragment>
-      <Breadcrumbs items={['Projects', project.name, 'Kanban Board']} />
+      <Breadcrumbs items={['プロジェクト', project.name, 'カンバンボード']} />
       <Header />
       <Filters
         projectUsers={project.users}
@@ -57,6 +57,7 @@ const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
               <IssueDetails
                 issueId={routeProps.match.params.issueId}
                 projectUsers={project.users}
+                projectVersions={project.versions}
                 fetchProject={fetchProject}
                 updateLocalProjectIssues={updateLocalProjectIssues}
                 modalClose={modal.close}

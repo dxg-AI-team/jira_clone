@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgres:11
+    container_name: jira_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: jira_development
+    ports:
+      - "5432:5432"
+    volumes:
+      - jira_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d jira_development"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build: ./api
+    container_name: jira_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: jira_development
+      JWT_SECRET: development12345
+      PORT: 3000
+      # Disable the guest auto-seed so the DB is not repopulated with a fresh
+      # "singularity 1.0" project on every visit. Set to "true" (or remove) to
+      # restore the original seed-on-first-visit behaviour.
+      SEED_GUEST_DATA: "false"
+      # Run the app without blocking on type errors (we only need it to run,
+      # and @types versions drift across npm/node versions). Decorator metadata
+      # is still emitted, so TypeORM works.
+      TS_NODE_TRANSPILE_ONLY: "true"
+      # Google OAuth client ID — used to verify Google ID tokens. Provide it via
+      # a .env file at the repo root: GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  client:
+    build: ./client
+    container_name: jira_client
+    depends_on:
+      - api
+    environment:
+      # Same Google OAuth client ID — inlined into the front-end bundle at build
+      # time by webpack DefinePlugin so the Google Sign-In button can initialise.
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  jira_pgdata:

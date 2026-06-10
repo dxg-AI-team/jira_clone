@@ -24,27 +24,27 @@ const ProjectBoardIssueDetailsDescription = ({ issue, updateIssue }) => {
 
   return (
     <Fragment>
-      <Title>Description</Title>
+      <Title>説明</Title>
       {isEditing ? (
         <Fragment>
           <TextEditor
-            placeholder="Describe the issue"
+            placeholder="課題を記述"
             defaultValue={description}
             onChange={setDescription}
           />
           <Actions>
             <Button variant="primary" onClick={handleUpdate}>
-              Save
+              保存
             </Button>
             <Button variant="empty" onClick={() => setEditing(false)}>
-              Cancel
+              キャンセル
             </Button>
           </Actions>
         </Fragment>
       ) : (
         <Fragment>
           {isDescriptionEmpty ? (
-            <EmptyLabel onClick={() => setEditing(true)}>Add a description...</EmptyLabel>
+            <EmptyLabel onClick={() => setEditing(true)}>説明を追加...</EmptyLabel>
           ) : (
             <TextEditedContent content={description} onClick={() => setEditing(true)} />
           )}

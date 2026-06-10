@@ -4,6 +4,7 @@ import * as issues from 'controllers/issues';
 import * as projects from 'controllers/projects';
 import * as test from 'controllers/test';
 import * as users from 'controllers/users';
+import * as versions from 'controllers/versions';
 
 export const attachPublicRoutes = (app: any): void => {
   if (process.env.NODE_ENV === 'test') {
@@ -12,6 +13,7 @@ export const attachPublicRoutes = (app: any): void => {
   }
 
   app.post('/authentication/guest', authentication.createGuestAccount);
+  app.post('/authentication/google', authentication.googleLogin);
 };
 
 export const attachPrivateRoutes = (app: any): void => {
@@ -29,4 +31,14 @@ export const attachPrivateRoutes = (app: any): void => {
   app.put('/project', projects.update);
 
   app.get('/currentUser', users.getCurrentUser);
+
+  app.get('/users', users.getProjectUsers);
+  app.post('/users', users.create);
+  app.put('/users/:userId', users.update);
+  app.delete('/users/:userId', users.remove);
+
+  app.get('/versions', versions.getProjectVersions);
+  app.post('/versions', versions.create);
+  app.put('/versions/:versionId', versions.update);
+  app.delete('/versions/:versionId', versions.remove);
 };

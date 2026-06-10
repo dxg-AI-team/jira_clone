@@ -14,6 +14,7 @@ import Comments from './Comments';
 import Status from './Status';
 import AssigneesReporter from './AssigneesReporter';
 import Priority from './Priority';
+import Version from './Version';
 import EstimateTracking from './EstimateTracking';
 import Dates from './Dates';
 import { TopActions, TopActionsRight, Content, Left, Right } from './Styles';
@@ -21,6 +22,7 @@ import { TopActions, TopActionsRight, Content, Left, Right } from './Styles';
 const propTypes = {
   issueId: PropTypes.string.isRequired,
   projectUsers: PropTypes.array.isRequired,
+  projectVersions: PropTypes.array.isRequired,
   fetchProject: PropTypes.func.isRequired,
   updateLocalProjectIssues: PropTypes.func.isRequired,
   modalClose: PropTypes.func.isRequired,
@@ -29,6 +31,7 @@ const propTypes = {
 const ProjectBoardIssueDetails = ({
   issueId,
   projectUsers,
+  projectVersions,
   fetchProject,
   updateLocalProjectIssues,
   modalClose,
@@ -62,7 +65,7 @@ const ProjectBoardIssueDetails = ({
           <AboutTooltip
             renderLink={linkProps => (
               <Button icon="feedback" variant="empty" {...linkProps}>
-                Give feedback
+                フィードバックを送る
               </Button>
             )}
           />
@@ -81,6 +84,7 @@ const ProjectBoardIssueDetails = ({
           <Status issue={issue} updateIssue={updateIssue} />
           <AssigneesReporter issue={issue} updateIssue={updateIssue} projectUsers={projectUsers} />
           <Priority issue={issue} updateIssue={updateIssue} />
+          <Version issue={issue} updateIssue={updateIssue} projectVersions={projectVersions} />
           <EstimateTracking issue={issue} updateIssue={updateIssue} />
           <Dates issue={issue} />
         </Right>

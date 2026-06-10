@@ -33,7 +33,7 @@ const ProjectSettings = ({ project, fetchProject }) => {
         try {
           await updateProject(values);
           await fetchProject();
-          toast.success('Changes have been saved successfully.');
+          toast.success('変更を保存しました。');
         } catch (error) {
           Form.handleAPIError(error, form);
         }
@@ -41,20 +41,24 @@ const ProjectSettings = ({ project, fetchProject }) => {
     >
       <FormCont>
         <FormElement>
-          <Breadcrumbs items={['Projects', project.name, 'Project Details']} />
-          <FormHeading>Project Details</FormHeading>
+          <Breadcrumbs items={['プロジェクト', project.name, 'プロジェクト詳細']} />
+          <FormHeading>プロジェクト詳細</FormHeading>
 
-          <Form.Field.Input name="name" label="Name" />
+          <Form.Field.Input name="name" label="名前" />
           <Form.Field.Input name="url" label="URL" />
           <Form.Field.TextEditor
             name="description"
-            label="Description"
-            tip="Describe the project in as much detail as you'd like."
+            label="説明"
+            tip="プロジェクトをできるだけ詳しく記述してください。"
           />
-          <Form.Field.Select name="category" label="Project Category" options={categoryOptions} />
+          <Form.Field.Select
+            name="category"
+            label="プロジェクトカテゴリ"
+            options={categoryOptions}
+          />
 
           <ActionButton type="submit" variant="primary" isWorking={isUpdating}>
-            Save changes
+            変更を保存
           </ActionButton>
         </FormElement>
       </FormCont>

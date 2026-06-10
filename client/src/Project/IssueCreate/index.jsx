@@ -45,6 +45,7 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
         reporterId: currentUserId,
         userIds: [],
         priority: IssuePriority.MEDIUM,
+        versionId: null,
       }}
       validations={{
         type: Form.is.required(),
@@ -61,7 +62,7 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
             users: values.userIds.map(id => ({ id })),
           });
           await fetchProject();
-          toast.success('Issue has been successfully created.');
+          toast.success('課題を作成しました。');
           onCreate();
         } catch (error) {
           Form.handleAPIError(error, form);
@@ -69,29 +70,25 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
       }}
     >
       <FormElement>
-        <FormHeading>Create issue</FormHeading>
+        <FormHeading>課題を作成</FormHeading>
         <Form.Field.Select
           name="type"
-          label="Issue Type"
-          tip="Start typing to get a list of possible matches."
+          label="課題タイプ"
+          tip="入力すると候補が表示されます。"
           options={typeOptions}
           renderOption={renderType}
           renderValue={renderType}
         />
         <Divider />
-        <Form.Field.Input
-          name="title"
-          label="Short Summary"
-          tip="Concisely summarize the issue in one or two sentences."
-        />
+        <Form.Field.Input name="title" label="概要" tip="課題を1〜2文で簡潔にまとめてください。" />
         <Form.Field.TextEditor
           name="description"
-          label="Description"
-          tip="Describe the issue in as much detail as you'd like."
+          label="説明"
+          tip="課題をできるだけ詳しく記述してください。"
         />
         <Form.Field.Select
           name="reporterId"
-          label="Reporter"
+          label="報告者"
           options={userOptions(project)}
           renderOption={renderUser(project)}
           renderValue={renderUser(project)}
@@ -99,26 +96,33 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
         <Form.Field.Select
           isMulti
           name="userIds"
-          label="Assignees"
-          tio="People who are responsible for dealing with this issue."
+          label="担当者"
+          tio="この課題に対応する担当者です。"
           options={userOptions(project)}
           renderOption={renderUser(project)}
           renderValue={renderUser(project)}
         />
         <Form.Field.Select
           name="priority"
-          label="Priority"
-          tip="Priority in relation to other issues."
+          label="優先度"
+          tip="他の課題と比較した優先度です。"
           options={priorityOptions}
           renderOption={renderPriority}
           renderValue={renderPriority}
         />
+        {project.versions && project.versions.length > 0 && (
+          <Form.Field.Select
+            name="versionId"
+            label="リリース"
+            options={project.versions.map(version => ({ value: version.id, label: version.name }))}
+          />
+        )}
         <Actions>
           <ActionButton type="submit" variant="primary" isWorking={isCreating}>
-            Create Issue
+            課題を作成
           </ActionButton>
           <ActionButton type="button" variant="empty" onClick={modalClose}>
-            Cancel
+            キャンセル
           </ActionButton>
         </Actions>
       </FormElement>

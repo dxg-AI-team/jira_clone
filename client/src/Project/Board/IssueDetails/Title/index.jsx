@@ -34,7 +34,7 @@ const ProjectBoardIssueDetailsTitle = ({ issue, updateIssue }) => {
     <Fragment>
       <TitleTextarea
         minRows={1}
-        placeholder="Short summary"
+        placeholder="概要"
         defaultValue={issue.title}
         ref={$titleInputRef}
         onBlur={handleTitleChange}

@@ -19,6 +19,7 @@ class User extends BaseEntity {
   static validations = {
     name: [is.required(), is.maxLength(100)],
     email: [is.required(), is.email(), is.maxLength(200)],
+    role: [is.oneOf(['admin', 'member'])],
   };
 
   @PrimaryGeneratedColumn()
@@ -32,6 +33,12 @@ class User extends BaseEntity {
 
   @Column('varchar', { length: 2000 })
   avatarUrl: string;
+
+  @Column('varchar', { default: 'member' })
+  role: string;
+
+  @Column('varchar', { length: 100, nullable: true })
+  googleId: string;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

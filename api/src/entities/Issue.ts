@@ -17,7 +17,7 @@ import {
 
 import is from 'utils/validation';
 import { IssueType, IssueStatus, IssuePriority } from 'constants/issues';
-import { Comment, Project, User } from '.';
+import { Comment, Project, User, ProjectVersion } from '.';
 
 @Entity()
 class Issue extends BaseEntity {
@@ -80,6 +80,16 @@ class Issue extends BaseEntity {
 
   @Column('integer')
   projectId: number;
+
+  @ManyToOne(
+    () => ProjectVersion,
+    version => version.issues,
+    { nullable: true, onDelete: 'SET NULL' },
+  )
+  version: ProjectVersion | null;
+
+  @Column('integer', { nullable: true })
+  versionId: number | null;
 
   @OneToMany(
     () => Comment,

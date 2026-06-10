@@ -8,7 +8,7 @@ const success = title => show({ title });
 const error = err => {
   show({
     type: 'danger',
-    title: 'Error',
+    title: 'エラー',
     message: get(err, 'message', err),
     duration: 0,
   });

@@ -41,7 +41,7 @@ const defaultProps = {
   name: undefined,
   value: undefined,
   defaultValue: undefined,
-  placeholder: 'Select',
+  placeholder: '選択',
   invalid: false,
   onCreate: undefined,
   isMulti: false,
@@ -171,7 +171,7 @@ const Select = ({
             )}
             <AddMore>
               <Icon type="plus" />
-              Add more
+              追加
             </AddMore>
           </ValueMulti>
         )}

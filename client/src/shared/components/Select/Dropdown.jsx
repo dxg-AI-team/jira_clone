@@ -178,7 +178,7 @@ const SelectDropdown = ({
     <Dropdown width={dropdownWidth}>
       <DropdownInput
         type="text"
-        placeholder="Search"
+        placeholder="検索"
         ref={$inputRef}
         autoFocus
         onKeyDown={handleInputKeyDown}
@@ -206,12 +206,12 @@ const SelectDropdown = ({
             onMouseEnter={handleOptionMouseEnter}
             onClick={() => createOption(searchValue)}
           >
-            {isCreatingOption ? `Creating "${searchValue}"...` : `Create "${searchValue}"`}
+            {isCreatingOption ? `「${searchValue}」を作成中...` : `「${searchValue}」を作成`}
           </Option>
         )}
       </Options>
 
-      {filteredOptions.length === 0 && <OptionsNoResults>No results</OptionsNoResults>}
+      {filteredOptions.length === 0 && <OptionsNoResults>該当なし</OptionsNoResults>}
     </Dropdown>
   );
 };

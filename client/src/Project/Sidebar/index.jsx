@@ -30,18 +30,19 @@ const ProjectSidebar = ({ project }) => {
         <ProjectAvatar />
         <ProjectTexts>
           <ProjectName>{project.name}</ProjectName>
-          <ProjectCategory>{ProjectCategoryCopy[project.category]} project</ProjectCategory>
+          <ProjectCategory>{ProjectCategoryCopy[project.category]}プロジェクト</ProjectCategory>
         </ProjectTexts>
       </ProjectInfo>
 
-      {renderLinkItem(match, 'Kanban Board', 'board', '/board')}
-      {renderLinkItem(match, 'Project settings', 'settings', '/settings')}
+      {renderLinkItem(match, 'カンバンボード', 'board', '/board')}
+      {renderLinkItem(match, 'プロジェクト設定', 'settings', '/settings')}
+      {renderLinkItem(match, 'ユーザー', 'menu', '/users')}
       <Divider />
-      {renderLinkItem(match, 'Releases', 'shipping')}
-      {renderLinkItem(match, 'Issues and filters', 'issues')}
-      {renderLinkItem(match, 'Pages', 'page')}
-      {renderLinkItem(match, 'Reports', 'reports')}
-      {renderLinkItem(match, 'Components', 'component')}
+      {renderLinkItem(match, 'リリース', 'shipping', '/releases')}
+      {renderLinkItem(match, '課題とフィルター', 'issues')}
+      {renderLinkItem(match, 'ページ', 'page')}
+      {renderLinkItem(match, 'レポート', 'reports')}
+      {renderLinkItem(match, 'コンポーネント', 'component')}
     </Sidebar>
   );
 };
@@ -57,7 +58,7 @@ const renderLinkItem = (match, text, iconType, path) => {
     <LinkItem {...linkItemProps}>
       <Icon type={iconType} />
       <LinkText>{text}</LinkText>
-      {!isImplemented && <NotImplemented>Not implemented</NotImplemented>}
+      {!isImplemented && <NotImplemented>未実装</NotImplemented>}
     </LinkItem>
   );
 };

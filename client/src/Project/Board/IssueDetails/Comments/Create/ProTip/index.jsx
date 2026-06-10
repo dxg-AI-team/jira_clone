@@ -28,7 +28,7 @@ const ProjectBoardIssueDetailsCommentsCreateProTip = ({ setFormOpen }) => {
 
   return (
     <Tip>
-      <strong>Pro tip:</strong>press<TipLetter>M</TipLetter>to comment
+      <strong>ヒント:</strong> <TipLetter>M</TipLetter> を押すとコメントできます
     </Tip>
   );
 };

@@ -36,3 +36,9 @@ export class InvalidTokenError extends CustomError {
     super(message, 'INVALID_TOKEN', 401);
   }
 }
+
+export class AuthorizationError extends CustomError {
+  constructor(message = 'You are not authorized to perform this action.') {
+    super(message, 'FORBIDDEN', 403);
+  }
+}

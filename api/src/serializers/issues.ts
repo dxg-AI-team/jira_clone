@@ -13,4 +13,5 @@ export const issuePartial = (issue: Issue): Partial<Issue> =>
     'createdAt',
     'updatedAt',
     'userIds',
+    'versionId',
   ]);

@@ -1,13 +1,24 @@
 import { FindOneOptions } from 'typeorm/find-options/FindOneOptions';
 
-import { Project, User, Issue, Comment } from 'entities';
+import { Project, ProjectVersion, User, Issue, Comment } from 'entities';
 import { EntityNotFoundError, BadUserInputError } from 'errors';
 import { generateErrors } from 'utils/validation';
 
-type EntityConstructor = typeof Project | typeof User | typeof Issue | typeof Comment;
-type EntityInstance = Project | User | Issue | Comment;
+type EntityConstructor =
+  | typeof Project
+  | typeof ProjectVersion
+  | typeof User
+  | typeof Issue
+  | typeof Comment;
+type EntityInstance = Project | ProjectVersion | User | Issue | Comment;
 
-const entities: { [key: string]: EntityConstructor } = { Comment, Issue, Project, User };
+const entities: { [key: string]: EntityConstructor } = {
+  Comment,
+  Issue,
+  Project,
+  ProjectVersion,
+  User,
+};
 
 export const findEntityOrThrow = async <T extends EntityConstructor>(
   Constructor: T,

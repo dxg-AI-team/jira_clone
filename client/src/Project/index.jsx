@@ -12,6 +12,8 @@ import Board from './Board';
 import IssueSearch from './IssueSearch';
 import IssueCreate from './IssueCreate';
 import ProjectSettings from './ProjectSettings';
+import Users from './Users';
+import Releases from './Releases';
 import { ProjectPage } from './Styles';
 
 const Project = () => {
@@ -89,6 +91,16 @@ const Project = () => {
       <Route
         path={`${match.path}/settings`}
         render={() => <ProjectSettings project={project} fetchProject={fetchProject} />}
+      />
+
+      <Route
+        path={`${match.path}/users`}
+        render={() => <Users project={project} fetchProject={fetchProject} />}
+      />
+
+      <Route
+        path={`${match.path}/releases`}
+        render={() => <Releases project={project} fetchProject={fetchProject} />}
       />
 
       {match.isExact && <Redirect to={`${match.url}/board`} />}

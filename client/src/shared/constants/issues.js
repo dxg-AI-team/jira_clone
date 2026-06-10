@@ -20,22 +20,22 @@ export const IssuePriority = {
 };
 
 export const IssueTypeCopy = {
-  [IssueType.TASK]: 'Task',
-  [IssueType.BUG]: 'Bug',
-  [IssueType.STORY]: 'Story',
+  [IssueType.TASK]: 'タスク',
+  [IssueType.BUG]: 'バグ',
+  [IssueType.STORY]: 'ストーリー',
 };
 
 export const IssueStatusCopy = {
-  [IssueStatus.BACKLOG]: 'Backlog',
-  [IssueStatus.SELECTED]: 'Selected for development',
-  [IssueStatus.INPROGRESS]: 'In progress',
-  [IssueStatus.DONE]: 'Done',
+  [IssueStatus.BACKLOG]: 'バックログ',
+  [IssueStatus.SELECTED]: '選択済み',
+  [IssueStatus.INPROGRESS]: '進行中',
+  [IssueStatus.DONE]: '完了',
 };
 
 export const IssuePriorityCopy = {
-  [IssuePriority.HIGHEST]: 'Highest',
-  [IssuePriority.HIGH]: 'High',
-  [IssuePriority.MEDIUM]: 'Medium',
-  [IssuePriority.LOW]: 'Low',
-  [IssuePriority.LOWEST]: 'Lowest',
+  [IssuePriority.HIGHEST]: '最高',
+  [IssuePriority.HIGH]: '高',
+  [IssuePriority.MEDIUM]: '中',
+  [IssuePriority.LOW]: '低',
+  [IssuePriority.LOWEST]: '最低',
 };

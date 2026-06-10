@@ -52,7 +52,7 @@ const ProjectIssueSearch = ({ project }) => {
       <SearchInputCont>
         <SearchInputDebounced
           autoFocus
-          placeholder="Search issues by summary, description..."
+          placeholder="概要・説明で課題を検索..."
           onChange={handleSearchChange}
         />
         <SearchIcon type="search" size={22} />
@@ -61,14 +61,14 @@ const ProjectIssueSearch = ({ project }) => {
 
       {isSearchTermEmpty && recentIssues.length > 0 && (
         <Fragment>
-          <SectionTitle>Recent Issues</SectionTitle>
+          <SectionTitle>最近の課題</SectionTitle>
           {recentIssues.map(renderIssue)}
         </Fragment>
       )}
 
       {!isSearchTermEmpty && matchingIssues.length > 0 && (
         <Fragment>
-          <SectionTitle>Matching Issues</SectionTitle>
+          <SectionTitle>一致する課題</SectionTitle>
           {matchingIssues.map(renderIssue)}
         </Fragment>
       )}
@@ -76,8 +76,8 @@ const ProjectIssueSearch = ({ project }) => {
       {!isSearchTermEmpty && !isLoading && matchingIssues.length === 0 && (
         <NoResults>
           <NoResultsSVG />
-          <NoResultsTitle>We couldn&apos;t find anything matching your search</NoResultsTitle>
-          <NoResultsTip>Try again with a different term.</NoResultsTip>
+          <NoResultsTitle>検索条件に一致する課題が見つかりませんでした</NoResultsTitle>
+          <NoResultsTip>別のキーワードで再度お試しください。</NoResultsTip>
         </NoResults>
       )}
     </IssueSearch>

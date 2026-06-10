@@ -32,17 +32,17 @@ const ProjectBoardIssueDetailsCommentsBodyForm = ({
     <Fragment>
       <Textarea
         autoFocus
-        placeholder="Add a comment..."
+        placeholder="コメントを追加..."
         value={value}
         onChange={onChange}
         ref={$textareaRef}
       />
       <Actions>
         <FormButton variant="primary" isWorking={isWorking} onClick={handleSubmit}>
-          Save
+          保存
         </FormButton>
         <FormButton variant="empty" onClick={onCancel}>
-          Cancel
+          キャンセル
         </FormButton>
       </Actions>
     </Fragment>

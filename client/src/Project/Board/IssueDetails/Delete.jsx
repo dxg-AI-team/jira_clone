@@ -24,9 +24,9 @@ const ProjectBoardIssueDetailsDelete = ({ issue, fetchProject, modalClose }) => 
 
   return (
     <ConfirmModal
-      title="Are you sure you want to delete this issue?"
-      message="Once you delete, it's gone for good."
-      confirmText="Delete issue"
+      title="この課題を削除してもよろしいですか？"
+      message="削除すると元に戻せません。"
+      confirmText="課題を削除"
       onConfirm={handleIssueDelete}
       renderLink={modal => (
         <Button icon="trash" iconSize={19} variant="empty" onClick={modal.open} />

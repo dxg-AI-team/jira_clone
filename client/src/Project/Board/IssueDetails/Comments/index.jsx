@@ -14,7 +14,7 @@ const propTypes = {
 
 const ProjectBoardIssueDetailsComments = ({ issue, fetchIssue }) => (
   <Comments>
-    <Title>Comments</Title>
+    <Title>コメント</Title>
     <Create issueId={issue.id} fetchIssue={fetchIssue} />
 
     {sortByNewest(issue.comments, 'createdAt').map(comment => (

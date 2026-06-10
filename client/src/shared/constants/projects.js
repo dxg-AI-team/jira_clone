@@ -5,7 +5,7 @@ export const ProjectCategory = {
 };
 
 export const ProjectCategoryCopy = {
-  [ProjectCategory.SOFTWARE]: 'Software',
-  [ProjectCategory.MARKETING]: 'Marketing',
-  [ProjectCategory.BUSINESS]: 'Business',
+  [ProjectCategory.SOFTWARE]: 'ソフトウェア',
+  [ProjectCategory.MARKETING]: 'マーケティング',
+  [ProjectCategory.BUSINESS]: 'ビジネス',
 };
