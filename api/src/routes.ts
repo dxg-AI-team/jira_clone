@@ -2,6 +2,7 @@ import * as authentication from 'controllers/authentication';
 import * as comments from 'controllers/comments';
 import * as components from 'controllers/components';
 import * as issues from 'controllers/issues';
+import * as pages from 'controllers/pages';
 import * as projects from 'controllers/projects';
 import * as test from 'controllers/test';
 import * as users from 'controllers/users';
@@ -47,4 +48,10 @@ export const attachPrivateRoutes = (app: any): void => {
   app.post('/components', components.create);
   app.put('/components/:componentId', components.update);
   app.delete('/components/:componentId', components.remove);
+
+  app.get('/pages', pages.getProjectPages);
+  app.get('/pages/:pageId', pages.getPage);
+  app.post('/pages', pages.create);
+  app.put('/pages/:pageId', pages.update);
+  app.delete('/pages/:pageId', pages.remove);
 };
