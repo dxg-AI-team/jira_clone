@@ -120,7 +120,12 @@ const ProjectsList = () => {
                   </DeleteButton>
                 )}
                 <CardHeader>
-                  <ProjectAvatar name={project.name} icon={project.icon} size={36} />
+                  <ProjectAvatar
+                    name={project.name}
+                    icon={project.icon}
+                    avatarUrl={project.avatarUrl}
+                    size={36}
+                  />
                   <div style={{ marginLeft: 12, minWidth: 0 }}>
                     <CardName>{project.name}</CardName>
                     <CardCategory>{ProjectCategoryCopy[project.category]}プロジェクト</CardCategory>

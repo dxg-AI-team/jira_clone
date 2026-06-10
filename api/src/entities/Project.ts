@@ -31,6 +31,9 @@ class Project extends BaseEntity {
   @Column('varchar', { nullable: true })
   icon: string | null;
 
+  @Column('varchar', { length: 2000, nullable: true })
+  avatarUrl: string | null;
+
   @Column('varchar', { nullable: true })
   url: string | null;
 

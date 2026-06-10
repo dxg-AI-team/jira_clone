@@ -52,6 +52,7 @@ const ProjectSettings = ({ project, fetchProject }) => {
       initialValues={Form.initialValues(project, get => ({
         name: get('name'),
         icon: get('icon', null),
+        avatarUrl: get('avatarUrl', ''),
         url: get('url'),
         category: get('category'),
         description: get('description'),
@@ -78,6 +79,11 @@ const ProjectSettings = ({ project, fetchProject }) => {
 
           <Form.Field.Input name="name" label="名前" />
           <IconPicker />
+          <Form.Field.Input
+            name="avatarUrl"
+            label="アイコン画像URL"
+            tip="画像URLを指定するとアイコンより優先して表示されます。"
+          />
           <Form.Field.Input name="url" label="URL" />
           <Form.Field.TextEditor
             name="description"

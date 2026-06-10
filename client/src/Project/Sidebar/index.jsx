@@ -51,7 +51,7 @@ const ProjectSidebar = ({ project }) => {
           onClick={() => setSwitcherOpen(!isSwitcherOpen)}
           title="プロジェクトを切り替え"
         >
-          <ProjectAvatar name={project.name} icon={project.icon} />
+          <ProjectAvatar name={project.name} icon={project.icon} avatarUrl={project.avatarUrl} />
           <ProjectTexts>
             <ProjectName>{project.name} ▾</ProjectName>
             <ProjectCategory>{ProjectCategoryCopy[project.category]}プロジェクト</ProjectCategory>

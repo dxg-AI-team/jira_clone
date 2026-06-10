@@ -8,6 +8,7 @@ const propTypes = {
   className: PropTypes.string,
   name: PropTypes.string,
   icon: PropTypes.string,
+  avatarUrl: PropTypes.string,
   size: PropTypes.number,
 };
 
@@ -15,6 +16,7 @@ const defaultProps = {
   className: undefined,
   name: '',
   icon: null,
+  avatarUrl: null,
   size: 40,
 };
 
@@ -46,11 +48,26 @@ const Box = styled.div`
   ${font.medium}
 `;
 
-const ProjectAvatar = ({ className, name, icon, size }) => (
-  <Box className={className} size={size} bg={getColorFromName(name)}>
-    {icon || (name || 'P').charAt(0).toUpperCase()}
-  </Box>
-);
+const ImageBox = styled.div`
+  flex-shrink: 0;
+  width: ${props => props.size}px;
+  height: ${props => props.size}px;
+  border-radius: 5px;
+  background-image: url("${props => props.avatarUrl}");
+  background-size: cover;
+  background-position: center;
+`;
+
+const ProjectAvatar = ({ className, name, icon, avatarUrl, size }) => {
+  if (avatarUrl) {
+    return <ImageBox className={className} size={size} avatarUrl={avatarUrl} />;
+  }
+  return (
+    <Box className={className} size={size} bg={getColorFromName(name)}>
+      {icon || (name || 'P').charAt(0).toUpperCase()}
+    </Box>
+  );
+};
 
 ProjectAvatar.propTypes = propTypes;
 ProjectAvatar.defaultProps = defaultProps;
