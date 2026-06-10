@@ -2,6 +2,7 @@ import styled from 'styled-components';
 
 import { color, font } from 'shared/utils/styles';
 import Button from 'shared/components/Button';
+import Form from 'shared/components/Form';
 
 export const Page = styled.div`
   padding: 25px 32px 50px;
@@ -118,7 +119,7 @@ export const FormHeading = styled.h1`
   color: ${color.textDark};
 `;
 
-export const FormElement = styled.div`
+export const FormElement = styled(Form.Element)`
   padding: 5px 0 20px;
 `;
 

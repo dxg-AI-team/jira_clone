@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 import { color, font, mixin } from 'shared/utils/styles';
+import Form from 'shared/components/Form';
 
 export const Page = styled.div`
   min-height: 100vh;
@@ -127,7 +128,7 @@ export const FormHeading = styled.h1`
   color: ${color.textDark};
 `;
 
-export const FormElement = styled.div`
+export const FormElement = styled(Form.Element)`
   padding: 5px 0 20px;
 `;
 
