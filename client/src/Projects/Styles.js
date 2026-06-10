@@ -1,0 +1,137 @@
+import styled from 'styled-components';
+
+import { color, font, mixin } from 'shared/utils/styles';
+
+export const Page = styled.div`
+  min-height: 100vh;
+  padding: 40px 24px 80px;
+  background: ${color.backgroundLightest};
+`;
+
+export const Container = styled.div`
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+`;
+
+export const TopBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+`;
+
+export const Title = styled.h1`
+  ${font.bold}
+  ${font.size(28)}
+  color: ${color.textDarkest};
+`;
+
+export const TopActions = styled.div`
+  display: flex;
+  align-items: center;
+  > * + * {
+    margin-left: 12px;
+  }
+`;
+
+export const LogoutLink = styled.div`
+  cursor: pointer;
+  ${font.size(14)}
+  color: ${color.textMedium};
+  &:hover {
+    color: ${color.textDark};
+  }
+`;
+
+export const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+`;
+
+export const ProjectCard = styled.div`
+  position: relative;
+  padding: 20px;
+  border: 1px solid ${color.borderLightest};
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: box-shadow 0.1s;
+  &:hover {
+    box-shadow: rgba(9, 30, 66, 0.13) 0px 0px 1px, rgba(9, 30, 66, 0.13) 0px 4px 8px -2px;
+  }
+`;
+
+export const CardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+`;
+
+export const CardIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 12px;
+  border-radius: 6px;
+  color: #fff;
+  background: ${color.primary};
+  ${font.bold}
+  ${font.size(16)}
+`;
+
+export const CardName = styled.div`
+  ${font.medium}
+  ${font.size(17)}
+  color: ${color.textDark};
+  ${mixin.truncateText}
+`;
+
+export const CardCategory = styled.div`
+  ${font.size(13)}
+  color: ${color.textMedium};
+`;
+
+export const CardDescription = styled.div`
+  margin-top: 6px;
+  min-height: 36px;
+  ${font.size(13.5)}
+  color: ${color.textMedium};
+`;
+
+export const DeleteButton = styled.div`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+`;
+
+export const Empty = styled.div`
+  padding: 60px 20px;
+  text-align: center;
+  ${font.size(15)}
+  color: ${color.textMedium};
+  border: 1px dashed ${color.borderLight};
+  border-radius: 8px;
+`;
+
+export const FormHeading = styled.h1`
+  padding-bottom: 15px;
+  ${font.medium}
+  ${font.size(21)}
+  color: ${color.textDark};
+`;
+
+export const FormElement = styled.div`
+  padding: 5px 0 20px;
+`;
+
+export const Actions = styled.div`
+  display: flex;
+  padding-top: 28px;
+`;

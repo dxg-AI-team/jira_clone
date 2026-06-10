@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { NavLink, useRouteMatch } from 'react-router-dom';
+import { NavLink, useRouteMatch, useHistory } from 'react-router-dom';
 
 import { ProjectCategoryCopy } from 'shared/constants/projects';
 import { Icon, ProjectAvatar } from 'shared/components';
@@ -23,13 +23,18 @@ const propTypes = {
 
 const ProjectSidebar = ({ project }) => {
   const match = useRouteMatch();
+  const history = useHistory();
 
   return (
     <Sidebar>
-      <ProjectInfo>
+      <ProjectInfo
+        onClick={() => history.push('/projects')}
+        style={{ cursor: 'pointer' }}
+        title="プロジェクトを切り替え"
+      >
         <ProjectAvatar />
         <ProjectTexts>
-          <ProjectName>{project.name}</ProjectName>
+          <ProjectName>{project.name} ▾</ProjectName>
           <ProjectCategory>{ProjectCategoryCopy[project.category]}プロジェクト</ProjectCategory>
         </ProjectTexts>
       </ProjectInfo>
@@ -52,7 +57,7 @@ const renderLinkItem = (match, text, iconType, path) => {
   const isImplemented = !!path;
 
   const linkItemProps = isImplemented
-    ? { as: NavLink, exact: true, to: `${match.path}${path}` }
+    ? { as: NavLink, exact: true, to: `${match.url}${path}` }
     : { as: 'div' };
 
   return (

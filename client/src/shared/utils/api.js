@@ -4,12 +4,14 @@ import history from 'browserHistory';
 import toast from 'shared/utils/toast';
 import { objectToQueryString } from 'shared/utils/url';
 import { getStoredAuthToken, removeStoredAuthToken } from 'shared/utils/authToken';
+import { getCurrentProjectId } from 'shared/utils/currentProject';
 
 const defaults = {
   baseURL: process.env.API_URL || 'http://localhost:3000',
   headers: () => ({
     'Content-Type': 'application/json',
     Authorization: getStoredAuthToken() ? `Bearer ${getStoredAuthToken()}` : undefined,
+    'X-Project-Id': getCurrentProjectId() || undefined,
   }),
   error: {
     code: 'INTERNAL_ERROR',

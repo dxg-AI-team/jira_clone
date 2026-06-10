@@ -5,6 +5,7 @@ import { get } from 'lodash';
 
 import useApi from 'shared/hooks/api';
 import { sortByNewest } from 'shared/utils/javascript';
+import { getCurrentProjectId } from 'shared/utils/currentProject';
 import { IssueTypeIcon } from 'shared/components';
 
 import NoResultsSVG from './NoResultsSvg';
@@ -85,7 +86,7 @@ const ProjectIssueSearch = ({ project }) => {
 };
 
 const renderIssue = issue => (
-  <Link key={issue.id} to={`/project/board/issues/${issue.id}`}>
+  <Link key={issue.id} to={`/project/${getCurrentProjectId()}/board/issues/${issue.id}`}>
     <Issue>
       <IssueTypeIcon type={issue.type} size={25} />
       <IssueData>

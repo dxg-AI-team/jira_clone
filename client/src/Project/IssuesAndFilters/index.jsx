@@ -193,7 +193,10 @@ const ProjectIssuesAndFilters = ({ project }) => {
           {issues.map(issue => {
             const badge = statusBadgeColors[issue.status];
             return (
-              <Row key={issue.id} onClick={() => history.push(`/project/board/issues/${issue.id}`)}>
+              <Row
+                key={issue.id}
+                onClick={() => history.push(`/project/${project.id}/board/issues/${issue.id}`)}
+              >
                 <ColType>
                   <IssueTypeIcon type={issue.type} />
                 </ColType>

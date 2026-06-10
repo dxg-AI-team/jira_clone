@@ -38,19 +38,28 @@ const propTypes = {
 
 const ProjectUsers = ({ project, fetchProject }) => {
   const [{ data: currentUserData }] = useApi.get('/currentUser');
+  const [{ data: allUsersData }, fetchAllUsers] = useApi.get('/users/all');
+
   const currentUser = currentUserData && currentUserData.currentUser;
   const isAdmin = !!currentUser && currentUser.role === 'admin';
 
-  // null = modal closed, {} = add new, user object = edit existing
-  const [modalUser, setModalUser] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [isAddOpen, setAddOpen] = useState(false);
 
-  const users = project.users || [];
+  const members = project.users || [];
+  const allUsers = (allUsersData && allUsersData.users) || [];
+  const nonMembers = allUsers.filter(u => !members.some(m => m.id === u.id));
 
-  const handleDelete = async userId => {
+  const refresh = async () => {
+    await fetchProject();
+    await fetchAllUsers();
+  };
+
+  const handleRemoveMember = async userId => {
     try {
-      await api.delete(`/users/${userId}`);
+      await api.delete(`/project/members/${userId}`);
       await fetchProject();
-      toast.success('ユーザーを削除しました。');
+      toast.success('メンバーを外しました。');
     } catch (error) {
       toast.error(error);
     }
@@ -59,19 +68,19 @@ const ProjectUsers = ({ project, fetchProject }) => {
   return (
     <Page>
       <Header>
-        <Title>ユーザー</Title>
+        <Title>メンバー</Title>
         {isAdmin && (
-          <Button variant="primary" onClick={() => setModalUser({})}>
+          <Button variant="primary" onClick={() => setAddOpen(true)}>
             メンバーを追加
           </Button>
         )}
       </Header>
 
       <UserList>
-        {users.map(user => {
+        {members.map(user => {
           const isSelf = currentUser && currentUser.id === user.id;
           const canEdit = isAdmin || isSelf;
-          const canDelete = isAdmin && !isSelf;
+          const canRemove = isAdmin && !isSelf;
 
           return (
             <UserRow key={user.id}>
@@ -87,17 +96,17 @@ const ProjectUsers = ({ project, fetchProject }) => {
 
               <RowActions>
                 {canEdit && (
-                  <Button variant="secondary" onClick={() => setModalUser(user)}>
+                  <Button variant="secondary" onClick={() => setEditingUser(user)}>
                     編集
                   </Button>
                 )}
-                {canDelete && (
+                {canRemove && (
                   <ConfirmModal
-                    title="このユーザーを削除しますか？"
-                    message="削除すると元に戻せません。担当中の課題やコメントも削除されます。"
-                    confirmText="削除"
+                    title="このメンバーをプロジェクトから外しますか？"
+                    message="ユーザー自体は削除されません。再度追加できます。"
+                    confirmText="外す"
                     variant="danger"
-                    onConfirm={({ close }) => handleDelete(user.id).then(close)}
+                    onConfirm={({ close }) => handleRemoveMember(user.id).then(close)}
                     renderLink={({ open }) => (
                       <Button variant="empty" icon="trash" onClick={open} />
                     )}
@@ -109,19 +118,37 @@ const ProjectUsers = ({ project, fetchProject }) => {
         })}
       </UserList>
 
-      {modalUser && (
+      {isAddOpen && (
         <Modal
           isOpen
           width={520}
-          onClose={() => setModalUser(null)}
+          onClose={() => setAddOpen(false)}
           renderContent={modal => (
-            <UserForm
-              user={modalUser.id ? modalUser : null}
+            <AddMemberForm
+              nonMembers={nonMembers}
+              onSuccess={async () => {
+                await refresh();
+                modal.close();
+                setAddOpen(false);
+              }}
+            />
+          )}
+        />
+      )}
+
+      {editingUser && (
+        <Modal
+          isOpen
+          width={520}
+          onClose={() => setEditingUser(null)}
+          renderContent={modal => (
+            <EditUserForm
+              user={editingUser}
               isAdmin={isAdmin}
               onSuccess={async () => {
-                await fetchProject();
+                await refresh();
                 modal.close();
-                setModalUser(null);
+                setEditingUser(null);
               }}
             />
           )}
@@ -131,37 +158,34 @@ const ProjectUsers = ({ project, fetchProject }) => {
   );
 };
 
-const userFormPropTypes = {
-  user: PropTypes.object,
-  isAdmin: PropTypes.bool.isRequired,
-  onSuccess: PropTypes.func.isRequired,
-};
-
-const UserForm = ({ user, isAdmin, onSuccess }) => {
-  const isEdit = !!user;
+const AddMemberForm = ({ nonMembers, onSuccess }) => {
+  const [mode, setMode] = useState('existing');
+  const userOptions = nonMembers.map(u => ({ value: u.id, label: `${u.name}（${u.email}）` }));
 
   return (
     <Form
       enableReinitialize
-      initialValues={Form.initialValues(user || {}, get => ({
-        name: get('name', ''),
-        email: get('email', ''),
-        avatarUrl: get('avatarUrl', ''),
-        role: get('role', 'member'),
-      }))}
-      validations={{
-        name: [Form.is.required(), Form.is.maxLength(100)],
-        email: [Form.is.required(), Form.is.email()],
-      }}
+      initialValues={{ userId: null, name: '', email: '', role: 'member' }}
+      validations={
+        mode === 'existing'
+          ? { userId: Form.is.required() }
+          : {
+              name: [Form.is.required(), Form.is.maxLength(100)],
+              email: [Form.is.required(), Form.is.email()],
+            }
+      }
       onSubmit={async (values, form) => {
         try {
-          if (isEdit) {
-            await api.put(`/users/${user.id}`, values);
-            toast.success('ユーザー情報を更新しました。');
+          if (mode === 'existing') {
+            await api.post('/project/members', { userId: values.userId });
           } else {
-            await api.post('/users', values);
-            toast.success('ユーザーを追加しました。');
+            await api.post('/users', {
+              name: values.name,
+              email: values.email,
+              role: values.role,
+            });
           }
+          toast.success('メンバーを追加しました。');
           onSuccess();
         } catch (error) {
           Form.handleAPIError(error, form);
@@ -169,14 +193,42 @@ const UserForm = ({ user, isAdmin, onSuccess }) => {
       }}
     >
       <FormElement>
-        <FormHeading>{isEdit ? 'ユーザーを編集' : 'メンバーを追加'}</FormHeading>
-        <Form.Field.Input name="name" label="名前" />
-        <Form.Field.Input name="email" label="メールアドレス" disabled={!isAdmin} />
-        <Form.Field.Input name="avatarUrl" label="アバター画像URL" />
-        {isAdmin && <Form.Field.Select name="role" label="ロール" options={roleOptions} />}
+        <FormHeading>メンバーを追加</FormHeading>
+        <Actions style={{ paddingTop: 0, marginBottom: 16 }}>
+          <ActionButton
+            type="button"
+            variant={mode === 'existing' ? 'primary' : 'secondary'}
+            onClick={() => setMode('existing')}
+          >
+            既存ユーザー
+          </ActionButton>
+          <ActionButton
+            type="button"
+            variant={mode === 'new' ? 'primary' : 'secondary'}
+            onClick={() => setMode('new')}
+          >
+            新規作成
+          </ActionButton>
+        </Actions>
+
+        {mode === 'existing' ? (
+          <Form.Field.Select
+            name="userId"
+            label="ユーザー"
+            options={userOptions}
+            tip={userOptions.length === 0 ? '追加できる既存ユーザーがいません。' : undefined}
+          />
+        ) : (
+          <React.Fragment>
+            <Form.Field.Input name="name" label="名前" />
+            <Form.Field.Input name="email" label="メールアドレス" />
+            <Form.Field.Select name="role" label="ロール" options={roleOptions} />
+          </React.Fragment>
+        )}
+
         <Actions>
           <ActionButton type="submit" variant="primary">
-            {isEdit ? '更新' : '追加'}
+            追加
           </ActionButton>
         </Actions>
       </FormElement>
@@ -184,8 +236,55 @@ const UserForm = ({ user, isAdmin, onSuccess }) => {
   );
 };
 
+const EditUserForm = ({ user, isAdmin, onSuccess }) => (
+  <Form
+    enableReinitialize
+    initialValues={Form.initialValues(user, get => ({
+      name: get('name', ''),
+      email: get('email', ''),
+      avatarUrl: get('avatarUrl', ''),
+      role: get('role', 'member'),
+    }))}
+    validations={{
+      name: [Form.is.required(), Form.is.maxLength(100)],
+      email: [Form.is.required(), Form.is.email()],
+    }}
+    onSubmit={async (values, form) => {
+      try {
+        await api.put(`/users/${user.id}`, values);
+        toast.success('ユーザー情報を更新しました。');
+        onSuccess();
+      } catch (error) {
+        Form.handleAPIError(error, form);
+      }
+    }}
+  >
+    <FormElement>
+      <FormHeading>ユーザーを編集</FormHeading>
+      <Form.Field.Input name="name" label="名前" />
+      <Form.Field.Input name="email" label="メールアドレス" disabled={!isAdmin} />
+      <Form.Field.Input name="avatarUrl" label="アバター画像URL" />
+      {isAdmin && <Form.Field.Select name="role" label="ロール" options={roleOptions} />}
+      <Actions>
+        <ActionButton type="submit" variant="primary">
+          更新
+        </ActionButton>
+      </Actions>
+    </FormElement>
+  </Form>
+);
+
+AddMemberForm.propTypes = {
+  nonMembers: PropTypes.array.isRequired,
+  onSuccess: PropTypes.func.isRequired,
+};
+
+EditUserForm.propTypes = {
+  user: PropTypes.object.isRequired,
+  isAdmin: PropTypes.bool.isRequired,
+  onSuccess: PropTypes.func.isRequired,
+};
+
 ProjectUsers.propTypes = propTypes;
-UserForm.propTypes = userFormPropTypes;
-UserForm.defaultProps = { user: null };
 
 export default ProjectUsers;

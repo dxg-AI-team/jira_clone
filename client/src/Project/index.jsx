@@ -1,8 +1,9 @@
 import React from 'react';
-import { Route, Redirect, useRouteMatch, useHistory } from 'react-router-dom';
+import { Route, Redirect, useRouteMatch, useHistory, useParams } from 'react-router-dom';
 
 import useApi from 'shared/hooks/api';
 import { updateArrayItemById } from 'shared/utils/javascript';
+import { setCurrentProjectId } from 'shared/utils/currentProject';
 import { createQueryParamModalHelpers } from 'shared/utils/queryParamModal';
 import { PageLoader, PageError, Modal } from 'shared/components';
 
@@ -24,11 +25,16 @@ import { ProjectPage } from './Styles';
 const Project = () => {
   const match = useRouteMatch();
   const history = useHistory();
+  const { projectId } = useParams();
+
+  // Make every project-scoped API request target this project (sent as the
+  // X-Project-Id header) and key the cache per project.
+  setCurrentProjectId(projectId);
 
   const issueSearchModalHelpers = createQueryParamModalHelpers('issue-search');
   const issueCreateModalHelpers = createQueryParamModalHelpers('issue-create');
 
-  const [{ data, error, setLocalData }, fetchProject] = useApi.get('/project');
+  const [{ data, error, setLocalData }, fetchProject] = useApi.get('/project', { projectId });
 
   if (!data) return <PageLoader />;
   if (error) return <PageError />;
