@@ -1,12 +1,43 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { useFormikContext } from 'formik';
 
 import { ProjectCategory, ProjectCategoryCopy } from 'shared/constants/projects';
 import toast from 'shared/utils/toast';
 import useApi from 'shared/hooks/api';
 import { Form, Breadcrumbs } from 'shared/components';
 
-import { FormCont, FormHeading, FormElement, ActionButton } from './Styles';
+import {
+  FormCont,
+  FormHeading,
+  FormElement,
+  ActionButton,
+  IconFieldLabel,
+  IconChoices,
+  IconChoice,
+} from './Styles';
+
+const iconOptions = ['📋', '🚀', '🐞', '💼', '🎨', '⚙️', '📊', '🔧', '🌟', '📁', '💡', '🧩'];
+
+const IconPicker = () => {
+  const { values, setFieldValue } = useFormikContext();
+  return (
+    <div>
+      <IconFieldLabel>アイコン</IconFieldLabel>
+      <IconChoices>
+        {iconOptions.map(icon => (
+          <IconChoice
+            key={icon}
+            isSelected={values.icon === icon}
+            onClick={() => setFieldValue('icon', values.icon === icon ? null : icon)}
+          >
+            {icon}
+          </IconChoice>
+        ))}
+      </IconChoices>
+    </div>
+  );
+};
 
 const propTypes = {
   project: PropTypes.object.isRequired,
@@ -20,6 +51,7 @@ const ProjectSettings = ({ project, fetchProject }) => {
     <Form
       initialValues={Form.initialValues(project, get => ({
         name: get('name'),
+        icon: get('icon', null),
         url: get('url'),
         category: get('category'),
         description: get('description'),
@@ -45,6 +77,7 @@ const ProjectSettings = ({ project, fetchProject }) => {
           <FormHeading>プロジェクト詳細</FormHeading>
 
           <Form.Field.Input name="name" label="名前" />
+          <IconPicker />
           <Form.Field.Input name="url" label="URL" />
           <Form.Field.TextEditor
             name="description"

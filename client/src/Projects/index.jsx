@@ -8,7 +8,15 @@ import useApi from 'shared/hooks/api';
 import { removeStoredAuthToken } from 'shared/utils/authToken';
 import { setCurrentProjectId } from 'shared/utils/currentProject';
 import { ProjectCategory, ProjectCategoryCopy } from 'shared/constants/projects';
-import { Button, ConfirmModal, Modal, Form, PageLoader, PageError } from 'shared/components';
+import {
+  Button,
+  ConfirmModal,
+  Modal,
+  Form,
+  PageLoader,
+  PageError,
+  ProjectAvatar,
+} from 'shared/components';
 
 import {
   Page,
@@ -20,7 +28,6 @@ import {
   Grid,
   ProjectCard,
   CardHeader,
-  CardIcon,
   CardName,
   CardCategory,
   CardDescription,
@@ -113,8 +120,8 @@ const ProjectsList = () => {
                   </DeleteButton>
                 )}
                 <CardHeader>
-                  <CardIcon>{project.name.charAt(0)}</CardIcon>
-                  <div>
+                  <ProjectAvatar name={project.name} icon={project.icon} size={36} />
+                  <div style={{ marginLeft: 12, minWidth: 0 }}>
                     <CardName>{project.name}</CardName>
                     <CardCategory>{ProjectCategoryCopy[project.category]}プロジェクト</CardCategory>
                   </div>
