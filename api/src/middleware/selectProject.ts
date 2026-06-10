@@ -6,8 +6,8 @@ import { AuthorizationError } from 'errors';
 // management) simply ignore `req.projectId`.
 export const selectProject = (req: any, _res: any, next: any): void => {
   try {
-    const headerValue = req.get('X-Project-Id');
-    const projectId = headerValue ? Number(headerValue) : null;
+    const parsed = Number(req.get('X-Project-Id'));
+    const projectId = Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 
     if (projectId) {
       const projectIds = req.currentUser.projectIds || [];

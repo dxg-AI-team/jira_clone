@@ -8,11 +8,14 @@ import { getCurrentProjectId } from 'shared/utils/currentProject';
 
 const defaults = {
   baseURL: process.env.API_URL || 'http://localhost:3000',
-  headers: () => ({
-    'Content-Type': 'application/json',
-    Authorization: getStoredAuthToken() ? `Bearer ${getStoredAuthToken()}` : undefined,
-    'X-Project-Id': getCurrentProjectId() || undefined,
-  }),
+  headers: () => {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = getStoredAuthToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const projectId = getCurrentProjectId();
+    if (projectId) headers['X-Project-Id'] = projectId;
+    return headers;
+  },
   error: {
     code: 'INTERNAL_ERROR',
     message: 'Something went wrong. Please check your internet connection or contact our support.',
