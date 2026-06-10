@@ -87,14 +87,15 @@ const ProjectIssuesAndFilters = ({ project }) => {
 
   const userById = id => (project.users || []).find(u => u.id === id);
 
-  const isFiltered =
+  const isFiltered = Boolean(
     filters.searchTerm ||
-    filters.types.length ||
-    filters.statuses.length ||
-    filters.priorities.length ||
-    filters.userIds.length ||
-    filters.versionId ||
-    filters.componentIds.length;
+      filters.types.length ||
+      filters.statuses.length ||
+      filters.priorities.length ||
+      filters.userIds.length ||
+      filters.versionId ||
+      filters.componentIds.length,
+  );
 
   return (
     <Page>
