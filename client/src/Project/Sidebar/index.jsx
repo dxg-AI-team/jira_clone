@@ -34,6 +34,7 @@ const ProjectSidebar = ({ project }) => {
         </ProjectTexts>
       </ProjectInfo>
 
+      {renderLinkItem(match, '要約', 'reports', '/summary')}
       {renderLinkItem(match, 'カンバンボード', 'board', '/board')}
       {renderLinkItem(match, 'プロジェクト設定', 'settings', '/settings')}
       {renderLinkItem(match, 'ユーザー', 'menu', '/users')}
