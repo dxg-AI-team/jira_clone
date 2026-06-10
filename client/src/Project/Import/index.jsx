@@ -7,7 +7,7 @@ import toast from 'shared/utils/toast';
 import { IssueTypeCopy, IssueStatusCopy } from 'shared/constants/issues';
 import { Button } from 'shared/components';
 
-import { parseJiraCsv } from './parseJiraCsv';
+import { parseJiraCsv, buildJiraCsv, downloadCsv } from './parseJiraCsv';
 import {
   Page,
   Title,
@@ -51,7 +51,21 @@ const ProjectImport = ({ project, fetchProject }) => {
   const [fileName, setFileName] = useState('');
   const [parsed, setParsed] = useState(null);
   const [isImporting, setImporting] = useState(false);
+  const [isExporting, setExporting] = useState(false);
   const [result, setResult] = useState(null);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await api.get('/export');
+      const csv = buildJiraCsv(res.issues || []);
+      downloadCsv(csv, `${res.projectName || 'project'}.csv`);
+      toast.success(`${(res.issues || []).length} 件の課題をエクスポートしました。`);
+    } catch (error) {
+      toast.error(error);
+    }
+    setExporting(false);
+  };
 
   const handleFile = event => {
     const file = event.target.files[0];
@@ -89,7 +103,19 @@ const ProjectImport = ({ project, fetchProject }) => {
 
   return (
     <Page>
-      <Title>インポート</Title>
+      <Title>インポート / エクスポート</Title>
+
+      <Section>
+        <SectionTitle>エクスポート</SectionTitle>
+        <Intro>
+          現在のプロジェクト「{project.name}」の課題を CSV
+          で書き出します（再インポート可能な形式）。
+        </Intro>
+        <ImportButton variant="primary" isWorking={isExporting} onClick={handleExport}>
+          CSVをエクスポート
+        </ImportButton>
+      </Section>
+
       <Intro>
         本物の Jira から「エクスポート &gt; CSV」で書き出したファイルを、現在のプロジェクト「
         {project.name}」に取り込みます。担当者・報告者はメンバーと名前/メールで照合し、Fix Version

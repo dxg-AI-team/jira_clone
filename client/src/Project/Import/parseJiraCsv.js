@@ -61,3 +61,43 @@ export const parseJiraCsv = text => {
 
   return { rows, detected };
 };
+
+// Build a (re-importable) CSV string from exported issues. Multi-value fields
+// (assignees, versions, components) become repeated columns so the importer can
+// read them back.
+export const buildJiraCsv = issues => {
+  const maxOf = key => Math.max(1, 0, ...issues.map(issue => (issue[key] || []).length));
+  const maxAssignees = maxOf('assignees');
+  const maxVersions = maxOf('versions');
+  const maxComponents = maxOf('components');
+
+  const header = ['Summary', 'Issue Type', 'Status', 'Priority', 'Reporter'];
+  for (let n = 0; n < maxAssignees; n += 1) header.push('Assignee');
+  for (let n = 0; n < maxVersions; n += 1) header.push('Fix Version/s');
+  for (let n = 0; n < maxComponents; n += 1) header.push('Component/s');
+  header.push('Description');
+
+  const dataRows = issues.map(issue => {
+    const row = [issue.title, issue.type, issue.status, issue.priority, issue.reporter || ''];
+    for (let n = 0; n < maxAssignees; n += 1) row.push((issue.assignees || [])[n] || '');
+    for (let n = 0; n < maxVersions; n += 1) row.push((issue.versions || [])[n] || '');
+    for (let n = 0; n < maxComponents; n += 1) row.push((issue.components || [])[n] || '');
+    row.push(issue.description || '');
+    return row;
+  });
+
+  return Papa.unparse([header, ...dataRows]);
+};
+
+// Trigger a browser download of CSV text (with a BOM so Excel reads UTF-8).
+export const downloadCsv = (csv, filename) => {
+  const blob = new Blob([String.fromCharCode(0xfeff), csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
