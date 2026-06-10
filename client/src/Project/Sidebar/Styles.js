@@ -22,9 +22,60 @@ export const Sidebar = styled.div`
   }
 `;
 
+export const Switcher = styled.div`
+  position: relative;
+`;
+
 export const ProjectInfo = styled.div`
   display: flex;
   padding: 24px 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  &:hover {
+    background: ${color.backgroundLight};
+  }
+`;
+
+export const SwitcherDropdown = styled.div`
+  position: absolute;
+  z-index: ${zIndexValues.dropdown || 101};
+  top: 70px;
+  left: 0;
+  right: 0;
+  padding: 6px 0;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: rgba(9, 30, 66, 0.25) 0px 4px 8px -2px, rgba(9, 30, 66, 0.31) 0px 0px 1px;
+`;
+
+export const SwitcherItem = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 8px 14px;
+  ${font.size(14)};
+  color: ${props => (props.isActive ? color.primary : color.textDark)};
+  background: ${props => (props.isActive ? color.backgroundLight : 'transparent')};
+  cursor: pointer;
+  ${mixin.truncateText}
+  &:hover {
+    background: ${color.backgroundLight};
+  }
+`;
+
+export const SwitcherDivider = styled.div`
+  margin: 6px 0;
+  border-top: 1px solid ${color.borderLightest};
+`;
+
+export const SwitcherFooter = styled.div`
+  padding: 8px 14px;
+  ${font.size(13.5)};
+  color: ${color.textMedium};
+  cursor: pointer;
+  &:hover {
+    background: ${color.backgroundLight};
+    color: ${color.textDark};
+  }
 `;
 
 export const ProjectTexts = styled.div`
