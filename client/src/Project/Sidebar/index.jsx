@@ -39,7 +39,7 @@ const ProjectSidebar = ({ project }) => {
       {renderLinkItem(match, 'ユーザー', 'menu', '/users')}
       <Divider />
       {renderLinkItem(match, 'リリース', 'shipping', '/releases')}
-      {renderLinkItem(match, '課題とフィルター', 'issues')}
+      {renderLinkItem(match, '課題とフィルター', 'issues', '/issues')}
       {renderLinkItem(match, 'ページ', 'page')}
       {renderLinkItem(match, 'レポート', 'reports')}
       {renderLinkItem(match, 'コンポーネント', 'component')}

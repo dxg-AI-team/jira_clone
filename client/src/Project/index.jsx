@@ -14,6 +14,7 @@ import IssueCreate from './IssueCreate';
 import ProjectSettings from './ProjectSettings';
 import Users from './Users';
 import Releases from './Releases';
+import IssuesAndFilters from './IssuesAndFilters';
 import { ProjectPage } from './Styles';
 
 const Project = () => {
@@ -102,6 +103,8 @@ const Project = () => {
         path={`${match.path}/releases`}
         render={() => <Releases project={project} fetchProject={fetchProject} />}
       />
+
+      <Route path={`${match.path}/issues`} render={() => <IssuesAndFilters project={project} />} />
 
       {match.isExact && <Redirect to={`${match.url}/board`} />}
     </ProjectPage>
