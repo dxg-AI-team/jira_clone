@@ -6,6 +6,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 
 import is from 'utils/validation';
@@ -47,10 +49,11 @@ class Project extends BaseEntity {
   )
   issues: Issue[];
 
-  @OneToMany(
+  @ManyToMany(
     () => User,
-    user => user.project,
+    user => user.projects,
   )
+  @JoinTable()
   users: User[];
 
   @OneToMany(

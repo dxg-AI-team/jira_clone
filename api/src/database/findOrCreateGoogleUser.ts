@@ -1,5 +1,4 @@
-import { User, Project } from 'entities';
-import { ProjectCategory } from 'constants/projects';
+import { User } from 'entities';
 import { createEntity } from 'utils/typeorm';
 
 export type GooglePayload = {
@@ -9,24 +8,9 @@ export type GooglePayload = {
   picture?: string;
 };
 
-// The whole app shares a single project. Use the oldest existing project, or
-// create a default one if the database is empty.
-const getOrCreateSharedProject = async (): Promise<Project> => {
-  const project = await Project.findOne({ order: { id: 'ASC' } });
-  if (project) {
-    return project;
-  }
-  return createEntity(Project, {
-    name: 'サンプルプロジェクト',
-    url: 'https://www.atlassian.com/software/jira',
-    description: 'これは空のサンプルプロジェクトです。課題を自由に作成してください。',
-    category: ProjectCategory.SOFTWARE,
-  });
-};
-
-// Resolve a Google-authenticated user to a local User record:
-// match by googleId, then by email (linking the account), otherwise create a
-// new member of the shared project. The very first user becomes an admin.
+// Resolve a Google-authenticated user to a global User record: match by googleId,
+// then by email (linking the account), otherwise create a new global user. The very
+// first user becomes an admin. Project membership is managed separately.
 const findOrCreateGoogleUser = async (payload: GooglePayload): Promise<User> => {
   const { sub: googleId, email, name, picture } = payload;
 
@@ -54,7 +38,6 @@ const findOrCreateGoogleUser = async (payload: GooglePayload): Promise<User> => 
     return user;
   }
 
-  const project = await getOrCreateSharedProject();
   const adminCount = await User.count({ where: { role: 'admin' } });
 
   return createEntity(User, {
@@ -63,7 +46,6 @@ const findOrCreateGoogleUser = async (payload: GooglePayload): Promise<User> => 
     avatarUrl: picture || '',
     googleId: googleId || null,
     role: adminCount === 0 ? 'admin' : 'member',
-    project,
   } as Partial<User>);
 };
 

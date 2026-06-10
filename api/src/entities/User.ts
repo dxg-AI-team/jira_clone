@@ -7,7 +7,6 @@ import {
   UpdateDateColumn,
   OneToMany,
   ManyToMany,
-  ManyToOne,
   RelationId,
 } from 'typeorm';
 
@@ -58,14 +57,14 @@ class User extends BaseEntity {
   )
   issues: Issue[];
 
-  @ManyToOne(
+  @ManyToMany(
     () => Project,
     project => project.users,
   )
-  project: Project;
+  projects: Project[];
 
-  @RelationId((user: User) => user.project)
-  projectId: number;
+  @RelationId((user: User) => user.projects)
+  projectIds: number[];
 }
 
 export default User;

@@ -4,7 +4,7 @@ import { createEntity, updateEntity, deleteEntity } from 'utils/typeorm';
 
 export const getProjectComponents = catchErrors(async (req, res) => {
   const components = await Component.find({
-    where: { projectId: req.currentUser.projectId },
+    where: { projectId: req.projectId },
     order: { id: 'ASC' },
   });
   res.respond({ components });
@@ -13,7 +13,7 @@ export const getProjectComponents = catchErrors(async (req, res) => {
 export const create = catchErrors(async (req, res) => {
   const component = await createEntity(Component, {
     ...req.body,
-    projectId: req.currentUser.projectId,
+    projectId: req.projectId,
   });
   res.respond({ component });
 });

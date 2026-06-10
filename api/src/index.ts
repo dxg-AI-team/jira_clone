@@ -7,6 +7,7 @@ import cors from 'cors';
 import createDatabaseConnection from 'database/createConnection';
 import { addRespondToResponse } from 'middleware/response';
 import { authenticateUser } from 'middleware/authentication';
+import { selectProject } from 'middleware/selectProject';
 import { handleError } from 'middleware/errors';
 import { RouteNotFoundError } from 'errors';
 
@@ -32,6 +33,7 @@ const initializeExpress = (): void => {
   attachPublicRoutes(app);
 
   app.use('/', authenticateUser);
+  app.use('/', selectProject);
 
   attachPrivateRoutes(app);
 

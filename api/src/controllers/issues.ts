@@ -3,7 +3,7 @@ import { catchErrors } from 'errors';
 import { updateEntity, deleteEntity, createEntity, findEntityOrThrow } from 'utils/typeorm';
 
 export const getProjectIssues = catchErrors(async (req, res) => {
-  const { projectId } = req.currentUser;
+  const { projectId } = req;
   const { searchTerm } = req.query;
 
   let whereSQL = 'issue.projectId = :projectId';
@@ -28,8 +28,9 @@ export const getIssueWithUsersAndComments = catchErrors(async (req, res) => {
 });
 
 export const create = catchErrors(async (req, res) => {
-  const listPosition = await calculateListPosition(req.body);
-  const issue = await createEntity(Issue, { ...req.body, listPosition });
+  const { projectId } = req;
+  const listPosition = await calculateListPosition({ ...req.body, projectId });
+  const issue = await createEntity(Issue, { ...req.body, projectId, listPosition });
   res.respond({ issue });
 });
 

@@ -7,7 +7,7 @@ import { pagePartial } from 'serializers/pages';
 
 export const getProjectPages = catchErrors(async (req, res) => {
   const pages = await Page.find({
-    where: { projectId: req.currentUser.projectId },
+    where: { projectId: req.projectId },
     order: { id: 'ASC' },
   });
   res.respond({ pages: pages.map(pagePartial) });
@@ -21,7 +21,7 @@ export const getPage = catchErrors(async (req, res) => {
 export const create = catchErrors(async (req, res) => {
   const page = await createEntity(Page, {
     ...req.body,
-    projectId: req.currentUser.projectId,
+    projectId: req.projectId,
   });
   res.respond({ page });
 });
