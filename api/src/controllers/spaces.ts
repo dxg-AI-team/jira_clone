@@ -16,12 +16,31 @@ const requireSpaceMember = (req: any, spaceId: number): void => {
   }
 };
 
-const addMembership = (spaceId: number, userId: number): Promise<void> =>
+// Space-level admin: a global admin (superuser) or a member listed in the
+// space's `admins`. Loads the space's admins to check.
+const requireSpaceAdmin = async (req: any, spaceId: number): Promise<Space> => {
+  requireSpaceMember(req, spaceId);
+  const space = await findEntityOrThrow(Space, spaceId, { relations: ['admins'] });
+  const isSpaceAdmin = (space.adminIds || []).includes(req.currentUser.id);
+  if (req.currentUser.role !== 'admin' && !isSpaceAdmin) {
+    throw new AuthorizationError('このスペースの管理者のみが実行できる操作です。');
+  }
+  return space;
+};
+
+const addToRelation = (relation: string, spaceId: number, userId: number): Promise<void> =>
   getConnection()
     .createQueryBuilder()
-    .relation(Space, 'users')
+    .relation(Space, relation)
     .of(spaceId)
     .add(userId);
+
+const removeFromRelation = (relation: string, spaceId: number, userId: number): Promise<void> =>
+  getConnection()
+    .createQueryBuilder()
+    .relation(Space, relation)
+    .of(spaceId)
+    .remove(userId);
 
 export const getMySpaces = catchErrors(async (req, res) => {
   const ids = req.currentUser.spaceIds || [];
@@ -33,26 +52,31 @@ export const create = catchErrors(async (req, res) => {
   requireAdmin(req);
   const { name, icon, avatarUrl } = req.body;
   const space = await createEntity(Space, { name, icon, avatarUrl });
-  await addMembership(space.id, req.currentUser.id);
+  // The creator becomes both a member and a space admin.
+  await addToRelation('users', space.id, req.currentUser.id);
+  await addToRelation('admins', space.id, req.currentUser.id);
   res.respond({ space });
 });
 
 export const getSpace = catchErrors(async (req, res) => {
   const spaceId = Number(req.params.spaceId);
   requireSpaceMember(req, spaceId);
-  const space = await findEntityOrThrow(Space, spaceId, { relations: ['users', 'boards'] });
+  const space = await findEntityOrThrow(Space, spaceId, {
+    relations: ['users', 'admins', 'boards'],
+  });
   res.respond({ space });
 });
 
 export const update = catchErrors(async (req, res) => {
-  requireAdmin(req);
-  const space = await updateEntity(Space, req.params.spaceId, req.body);
+  const spaceId = Number(req.params.spaceId);
+  await requireSpaceAdmin(req, spaceId);
+  const space = await updateEntity(Space, spaceId, req.body);
   res.respond({ space });
 });
 
 export const remove = catchErrors(async (req, res) => {
-  requireAdmin(req);
   const spaceId = Number(req.params.spaceId);
+  await requireSpaceAdmin(req, spaceId);
   const connection = getConnection();
 
   const boards = await connection.query('SELECT id FROM project WHERE "spaceId" = $1', [spaceId]);
@@ -71,13 +95,20 @@ export const remove = catchErrors(async (req, res) => {
       'DELETE FROM issue_components_component WHERE "issueId" IN (SELECT id FROM issue WHERE "projectId" = $1)',
       [pid],
     );
+    await connection.query(
+      'DELETE FROM issue_watchers_user WHERE "issueId" IN (SELECT id FROM issue WHERE "projectId" = $1)',
+      [pid],
+    );
     await connection.query('DELETE FROM issue WHERE "projectId" = $1', [pid]);
+    await connection.query('DELETE FROM sprint WHERE "projectId" = $1', [pid]);
     await connection.query('DELETE FROM project_version WHERE "projectId" = $1', [pid]);
     await connection.query('DELETE FROM component WHERE "projectId" = $1', [pid]);
     await connection.query('DELETE FROM page WHERE "projectId" = $1', [pid]);
+    await connection.query('DELETE FROM saved_filter WHERE "projectId" = $1', [pid]);
   }
   await connection.query('DELETE FROM project WHERE "spaceId" = $1', [spaceId]);
   await connection.query('DELETE FROM space_users_user WHERE "spaceId" = $1', [spaceId]);
+  await connection.query('DELETE FROM space_admins_user WHERE "spaceId" = $1', [spaceId]);
 
   const space = await findEntityOrThrow(Space, spaceId);
   await Space.delete(spaceId);
@@ -85,22 +116,46 @@ export const remove = catchErrors(async (req, res) => {
 });
 
 export const addMember = catchErrors(async (req, res) => {
-  requireAdmin(req);
   const spaceId = Number(req.params.spaceId);
+  await requireSpaceAdmin(req, spaceId);
   const userId = Number(req.body.userId);
   const user = await findEntityOrThrow(User, userId);
-  await addMembership(spaceId, userId);
+  await addToRelation('users', spaceId, userId);
   res.respond({ user });
 });
 
 export const removeMember = catchErrors(async (req, res) => {
-  requireAdmin(req);
   const spaceId = Number(req.params.spaceId);
+  await requireSpaceAdmin(req, spaceId);
   const userId = Number(req.params.userId);
-  await getConnection()
-    .createQueryBuilder()
-    .relation(Space, 'users')
-    .of(spaceId)
-    .remove(userId);
+  await removeFromRelation('users', spaceId, userId);
+  // A removed member can't remain a space admin.
+  await removeFromRelation('admins', spaceId, userId);
+  res.respond({ userId });
+});
+
+// Promote an existing member to space admin.
+export const addAdmin = catchErrors(async (req, res) => {
+  const spaceId = Number(req.params.spaceId);
+  await requireSpaceAdmin(req, spaceId);
+  const userId = Number(req.params.userId);
+
+  const space = await findEntityOrThrow(Space, spaceId, { relations: ['users'] });
+  if (!space.users.some(u => u.id === userId)) {
+    throw new AuthorizationError('スペースのメンバーのみを管理者にできます。');
+  }
+  await addToRelation('admins', spaceId, userId);
+  res.respond({ userId });
+});
+
+// Demote a space admin back to a regular member. The last admin can't be removed.
+export const removeAdmin = catchErrors(async (req, res) => {
+  const spaceId = Number(req.params.spaceId);
+  const space = await requireSpaceAdmin(req, spaceId);
+  const userId = Number(req.params.userId);
+  if ((space.adminIds || []).length <= 1 && (space.adminIds || []).includes(userId)) {
+    throw new AuthorizationError('スペースには少なくとも1人の管理者が必要です。');
+  }
+  await removeFromRelation('admins', spaceId, userId);
   res.respond({ userId });
 });

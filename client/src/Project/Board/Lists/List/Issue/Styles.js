@@ -44,6 +44,37 @@ export const Bottom = styled.div`
   align-items: center;
 `;
 
+export const ParentChip = styled.div`
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  margin-bottom: 7px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: ${color.backgroundLightest};
+  ${font.size(11.5)}
+  color: ${color.textMedium};
+  ${mixin.truncateText}
+`;
+
+export const SubtaskBadge = styled.div`
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  margin-left: 8px;
+  padding: 0 7px;
+  border-radius: 10px;
+  ${font.size(11.5)}
+  ${font.medium}
+  color: ${color.textMedium};
+  background: ${color.backgroundMedium};
+`;
+
+export const LeftMeta = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 export const Assignees = styled.div`
   display: flex;
   flex-direction: row-reverse;

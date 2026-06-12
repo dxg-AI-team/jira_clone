@@ -134,6 +134,24 @@ export const MemberMeta = styled.div`
   min-width: 0;
 `;
 
+export const RoleBadge = styled.span`
+  margin-right: 10px;
+  padding: 2px 9px;
+  border-radius: 11px;
+  ${font.size(12)}
+  ${font.medium}
+  color: ${props => (props.admin ? '#fff' : color.textMedium)};
+  background: ${props => (props.admin ? color.primary : color.backgroundMedium)};
+`;
+
+export const MemberActions = styled.div`
+  display: flex;
+  align-items: center;
+  > * + * {
+    margin-left: 4px;
+  }
+`;
+
 export const MemberName = styled.div`
   ${font.medium}
   ${font.size(14.5)}

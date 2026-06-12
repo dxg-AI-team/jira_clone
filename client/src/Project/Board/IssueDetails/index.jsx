@@ -60,8 +60,8 @@ const ProjectBoardIssueDetails = ({
   const updateLocalIssueWatchers = watcherIds =>
     setLocalData(currentData => ({ issue: { ...currentData.issue, watcherIds } }));
 
-  const updateIssue = updatedFields => {
-    api.optimisticUpdate(`/issues/${issueId}`, {
+  const updateIssue = async updatedFields => {
+    await api.optimisticUpdate(`/issues/${issueId}`, {
       updatedFields,
       currentFields: issue,
       setLocalData: fields => {
@@ -69,6 +69,9 @@ const ProjectBoardIssueDetails = ({
         updateLocalProjectIssues(issue.id, fields);
       },
     });
+    // Refresh so the activity timeline (and any server-derived fields) reflect
+    // this change without needing to reopen the issue.
+    fetchIssue();
   };
 
   return (

@@ -5,15 +5,20 @@ import { catchErrors, AuthorizationError } from 'errors';
 import { findEntityOrThrow, updateEntity, createEntity } from 'utils/typeorm';
 import { issuePartial } from 'serializers/issues';
 
-const requireAdmin = (req: any): void => {
-  if (req.currentUser.role !== 'admin') {
-    throw new AuthorizationError('管理者のみが実行できる操作です。');
-  }
-};
-
 const requireSpaceMember = (req: any, spaceId: number): void => {
   if (!(req.currentUser.spaceIds || []).includes(Number(spaceId))) {
     throw new AuthorizationError('このスペースにアクセスする権限がありません。');
+  }
+};
+
+// Board create/delete is gated on space-level admin (global admin or a member
+// listed in the space's admins).
+const requireSpaceAdmin = async (req: any, spaceId: number): Promise<void> => {
+  requireSpaceMember(req, spaceId);
+  const space = await findEntityOrThrow(Space, spaceId, { relations: ['admins'] });
+  const isSpaceAdmin = (space.adminIds || []).includes(req.currentUser.id);
+  if (req.currentUser.role !== 'admin' && !isSpaceAdmin) {
+    throw new AuthorizationError('このスペースの管理者のみが実行できる操作です。');
   }
 };
 
@@ -26,9 +31,8 @@ export const getSpaceBoards = catchErrors(async (req, res) => {
 });
 
 export const create = catchErrors(async (req, res) => {
-  requireAdmin(req);
   const { name, url, description, category, icon, avatarUrl, spaceId } = req.body;
-  requireSpaceMember(req, spaceId);
+  await requireSpaceAdmin(req, spaceId);
   const project = await createEntity(Project, {
     name,
     url,
@@ -63,8 +67,9 @@ export const update = catchErrors(async (req, res) => {
 });
 
 export const remove = catchErrors(async (req, res) => {
-  requireAdmin(req);
   const projectId = Number(req.params.projectId);
+  const board = await findEntityOrThrow(Project, projectId);
+  await requireSpaceAdmin(req, board.spaceId);
   const connection = getConnection();
 
   await connection.query(
@@ -79,10 +84,16 @@ export const remove = catchErrors(async (req, res) => {
     'DELETE FROM issue_components_component WHERE "issueId" IN (SELECT id FROM issue WHERE "projectId" = $1)',
     [projectId],
   );
+  await connection.query(
+    'DELETE FROM issue_watchers_user WHERE "issueId" IN (SELECT id FROM issue WHERE "projectId" = $1)',
+    [projectId],
+  );
   await connection.query('DELETE FROM issue WHERE "projectId" = $1', [projectId]);
+  await connection.query('DELETE FROM sprint WHERE "projectId" = $1', [projectId]);
   await connection.query('DELETE FROM project_version WHERE "projectId" = $1', [projectId]);
   await connection.query('DELETE FROM component WHERE "projectId" = $1', [projectId]);
   await connection.query('DELETE FROM page WHERE "projectId" = $1', [projectId]);
+  await connection.query('DELETE FROM saved_filter WHERE "projectId" = $1', [projectId]);
 
   const project = await findEntityOrThrow(Project, projectId);
   await Project.delete(projectId);

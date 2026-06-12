@@ -8,6 +8,7 @@ import {
   ManyToMany,
   JoinTable,
   OneToMany,
+  RelationId,
 } from 'typeorm';
 
 import is from 'utils/validation';
@@ -43,6 +44,15 @@ class Space extends BaseEntity {
   )
   @JoinTable()
   users: User[];
+
+  // Space-level administrators (a subset of users). Independent of the global
+  // User.role: a user can be a space admin here without being a global admin.
+  @ManyToMany(() => User)
+  @JoinTable({ name: 'space_admins_user' })
+  admins: User[];
+
+  @RelationId((space: Space) => space.admins)
+  adminIds: number[];
 
   @OneToMany(
     () => Project,

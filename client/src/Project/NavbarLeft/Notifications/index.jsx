@@ -44,7 +44,18 @@ const Notifications = () => {
   useEffect(() => {
     load();
     const id = setInterval(load, POLL_MS);
-    return () => clearInterval(id);
+    // Refresh immediately when the user returns to the tab, so the unread
+    // count is up to date without waiting for the next poll.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', load);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', load);
+    };
   }, [load]);
 
   const handleOpen = () => {

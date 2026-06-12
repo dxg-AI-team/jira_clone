@@ -3,20 +3,40 @@ import PropTypes from 'prop-types';
 import { useRouteMatch } from 'react-router-dom';
 import { Draggable } from 'react-beautiful-dnd';
 
-import { IssueTypeIcon, IssuePriorityIcon } from 'shared/components';
+import { IssueStatus } from 'shared/constants/issues';
+import { IssueTypeIcon, IssuePriorityIcon, Icon } from 'shared/components';
 
-import { IssueLink, Issue, Title, Bottom, Assignees, AssigneeAvatar } from './Styles';
+import {
+  IssueLink,
+  Issue,
+  Title,
+  ParentChip,
+  Bottom,
+  LeftMeta,
+  SubtaskBadge,
+  Assignees,
+  AssigneeAvatar,
+} from './Styles';
 
 const propTypes = {
   projectUsers: PropTypes.array.isRequired,
   issue: PropTypes.object.isRequired,
   index: PropTypes.number.isRequired,
+  allIssues: PropTypes.array,
 };
 
-const ProjectBoardListIssue = ({ projectUsers, issue, index }) => {
+const defaultProps = {
+  allIssues: [],
+};
+
+const ProjectBoardListIssue = ({ projectUsers, issue, index, allIssues }) => {
   const match = useRouteMatch();
 
   const assignees = issue.userIds.map(userId => projectUsers.find(user => user.id === userId));
+
+  const children = allIssues.filter(i => i.parentId === issue.id);
+  const childrenDone = children.filter(i => i.status === IssueStatus.DONE).length;
+  const parent = issue.parentId ? allIssues.find(i => i.id === issue.parentId) : null;
 
   return (
     <Draggable draggableId={issue.id.toString()} index={index}>
@@ -29,12 +49,26 @@ const ProjectBoardListIssue = ({ projectUsers, issue, index }) => {
           {...provided.dragHandleProps}
         >
           <Issue isBeingDragged={snapshot.isDragging && !snapshot.isDropAnimating}>
+            {parent && (
+              <ParentChip title={parent.title}>
+                <IssueTypeIcon type={parent.type} size={13} />
+                <span style={{ marginLeft: 5 }}>{parent.title}</span>
+              </ParentChip>
+            )}
             <Title>{issue.title}</Title>
             <Bottom>
-              <div>
+              <LeftMeta>
                 <IssueTypeIcon type={issue.type} />
                 <IssuePriorityIcon priority={issue.priority} top={-1} left={4} />
-              </div>
+                {children.length > 0 && (
+                  <SubtaskBadge title="サブタスクの完了数">
+                    <Icon type="task" size={13} />
+                    <span style={{ marginLeft: 4 }}>
+                      {childrenDone}/{children.length}
+                    </span>
+                  </SubtaskBadge>
+                )}
+              </LeftMeta>
               <Assignees>
                 {assignees.map(user => (
                   <AssigneeAvatar
@@ -54,5 +88,6 @@ const ProjectBoardListIssue = ({ projectUsers, issue, index }) => {
 };
 
 ProjectBoardListIssue.propTypes = propTypes;
+ProjectBoardListIssue.defaultProps = defaultProps;
 
 export default ProjectBoardListIssue;

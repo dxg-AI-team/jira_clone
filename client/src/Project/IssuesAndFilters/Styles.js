@@ -34,6 +34,12 @@ export const FilterBar = styled.div`
   margin-bottom: 18px;
 `;
 
+export const RowSubMeta = styled.div`
+  margin-top: 2px;
+  ${font.size(12)}
+  color: ${color.textLight};
+`;
+
 export const SavedBar = styled.div`
   display: flex;
   flex-wrap: wrap;

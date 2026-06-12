@@ -33,6 +33,7 @@ import {
   SearchBox,
   FilterItem,
   ClearButton,
+  RowSubMeta,
   SavedBar,
   SavedLabel,
   Chip,
@@ -267,6 +268,10 @@ const ProjectIssuesAndFilters = ({ project }) => {
           </HeaderRow>
           {issues.map(issue => {
             const badge = statusBadgeColors[issue.status];
+            const parent = issue.parentId
+              ? (project.issues || []).find(i => i.id === issue.parentId)
+              : null;
+            const childCount = (project.issues || []).filter(i => i.parentId === issue.id).length;
             return (
               <Row
                 key={issue.id}
@@ -275,7 +280,11 @@ const ProjectIssuesAndFilters = ({ project }) => {
                 <ColType>
                   <IssueTypeIcon type={issue.type} />
                 </ColType>
-                <ColTitle>{issue.title}</ColTitle>
+                <ColTitle>
+                  {issue.title}
+                  {parent && <RowSubMeta>↳ 親課題: {parent.title}</RowSubMeta>}
+                  {childCount > 0 && <RowSubMeta>サブタスク {childCount} 件</RowSubMeta>}
+                </ColTitle>
                 <ColStatus>
                   <StatusBadge bg={badge.bg} textColor={badge.textColor}>
                     {IssueStatusCopy[issue.status]}

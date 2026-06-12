@@ -39,6 +39,8 @@ import {
   MemberMeta,
   MemberName,
   MemberEmail,
+  RoleBadge,
+  MemberActions,
   FormHeading,
   FormElement,
   Actions,
@@ -89,7 +91,10 @@ const SpaceBoards = () => {
   if (!space) return <PageLoader />;
 
   const currentUser = currentUserData && currentUserData.currentUser;
-  const isAdmin = !!currentUser && currentUser.role === 'admin';
+  const adminIds = space.adminIds || [];
+  // Space-level admin: a global admin or a member listed in the space's admins.
+  const isAdmin =
+    !!currentUser && (currentUser.role === 'admin' || adminIds.includes(currentUser.id));
   const boards = space.boards || [];
   const members = space.users || [];
   const allUsers = (allUsersData && allUsersData.users) || [];
@@ -98,6 +103,21 @@ const SpaceBoards = () => {
   const refresh = async () => {
     await fetchSpace();
     await fetchAllUsers();
+  };
+
+  const setAdmin = async (userId, makeAdmin) => {
+    try {
+      if (makeAdmin) {
+        await api.post(`/spaces/${spaceId}/admins/${userId}`);
+        toast.success('スペース管理者にしました。');
+      } else {
+        await api.delete(`/spaces/${spaceId}/admins/${userId}`);
+        toast.success('スペース管理者を解除しました。');
+      }
+      await fetchSpace();
+    } catch (err) {
+      toast.error(err);
+    }
   };
 
   const deleteBoard = async boardId => {
@@ -196,25 +216,46 @@ const SpaceBoards = () => {
         </SectionHead>
 
         <MemberList>
-          {members.map(member => (
-            <MemberRow key={member.id}>
-              <Avatar size={32} avatarUrl={member.avatarUrl} name={member.name} />
-              <MemberMeta>
-                <MemberName>{member.name}</MemberName>
-                <MemberEmail>{member.email}</MemberEmail>
-              </MemberMeta>
-              {isAdmin && currentUser.id !== member.id && (
-                <ConfirmModal
-                  title="このメンバーをスペースから外しますか？"
-                  message="ユーザー自体は削除されません。"
-                  confirmText="外す"
-                  variant="danger"
-                  onConfirm={({ close }) => removeMember(member.id).then(close)}
-                  renderLink={({ open }) => <Button variant="empty" icon="trash" onClick={open} />}
-                />
-              )}
-            </MemberRow>
-          ))}
+          {members.map(member => {
+            const memberIsAdmin = adminIds.includes(member.id);
+            return (
+              <MemberRow key={member.id}>
+                <Avatar size={32} avatarUrl={member.avatarUrl} name={member.name} />
+                <MemberMeta>
+                  <MemberName>{member.name}</MemberName>
+                  <MemberEmail>{member.email}</MemberEmail>
+                </MemberMeta>
+                <RoleBadge admin={memberIsAdmin}>
+                  {memberIsAdmin ? 'スペース管理者' : 'メンバー'}
+                </RoleBadge>
+                {isAdmin && (
+                  <MemberActions>
+                    {memberIsAdmin ? (
+                      <Button variant="empty" onClick={() => setAdmin(member.id, false)}>
+                        管理者を解除
+                      </Button>
+                    ) : (
+                      <Button variant="empty" onClick={() => setAdmin(member.id, true)}>
+                        管理者にする
+                      </Button>
+                    )}
+                    {currentUser.id !== member.id && (
+                      <ConfirmModal
+                        title="このメンバーをスペースから外しますか？"
+                        message="ユーザー自体は削除されません。"
+                        confirmText="外す"
+                        variant="danger"
+                        onConfirm={({ close }) => removeMember(member.id).then(close)}
+                        renderLink={({ open }) => (
+                          <Button variant="empty" icon="trash" onClick={open} />
+                        )}
+                      />
+                    )}
+                  </MemberActions>
+                )}
+              </MemberRow>
+            );
+          })}
         </MemberList>
 
         {isEditOpen && (
