@@ -5,9 +5,10 @@ import { Droppable } from 'react-beautiful-dnd';
 import { intersection } from 'lodash';
 
 import { IssueStatusCopy } from 'shared/constants/issues';
+import { parseWorkflow } from 'shared/utils/workflow';
 
 import Issue from './Issue';
-import { List, Title, IssuesCount, Issues } from './Styles';
+import { List, Title, IssuesCount, WipLimit, Issues } from './Styles';
 
 const propTypes = {
   status: PropTypes.string.isRequired,
@@ -25,13 +26,19 @@ const ProjectBoardList = ({ status, project, filters, currentUserId }) => {
   const filteredListIssues = getSortedListIssues(filteredIssues, status);
   const allListIssues = getSortedListIssues(project.issues, status);
 
+  const config = parseWorkflow(project)[status] || {};
+  const columnName = config.name || IssueStatusCopy[status];
+  const wipLimit = Number(config.wipLimit) || null;
+  const overLimit = wipLimit && allListIssues.length > wipLimit;
+
   return (
     <Droppable key={status} droppableId={status}>
       {provided => (
         <List>
           <Title>
-            {`${IssueStatusCopy[status]} `}
+            {`${columnName} `}
             <IssuesCount>{formatIssuesCount(allListIssues, filteredListIssues)}</IssuesCount>
+            {wipLimit && <WipLimit over={overLimit}>{` (上限 ${wipLimit})`}</WipLimit>}
           </Title>
           <Issues
             {...provided.droppableProps}

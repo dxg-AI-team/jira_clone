@@ -43,7 +43,7 @@ export const create = catchErrors(async (req, res) => {
 
 export const getProjectWithUsersAndIssues = catchErrors(async (req, res) => {
   const project = await findEntityOrThrow(Project, req.projectId, {
-    relations: ['issues', 'versions', 'components'],
+    relations: ['issues', 'versions', 'components', 'sprints'],
   });
   // Members live on the space the board belongs to.
   const space = await findEntityOrThrow(Space, project.spaceId, { relations: ['users'] });

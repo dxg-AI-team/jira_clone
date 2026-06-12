@@ -82,6 +82,7 @@ const ProjectSidebar = ({ project }) => {
 
       {renderLinkItem(match, '要約', 'reports', '/summary')}
       {renderLinkItem(match, 'カンバンボード', 'board', '/board')}
+      {renderLinkItem(match, 'バックログ', 'menu', '/backlog')}
       {renderLinkItem(match, 'ボード設定', 'settings', '/settings')}
       {renderLinkItem(match, 'メンバー', 'menu', '/users')}
       {renderLinkItem(match, 'インポート', 'attach', '/import')}

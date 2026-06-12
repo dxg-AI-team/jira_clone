@@ -11,7 +11,7 @@ import {
 
 import is from 'utils/validation';
 import { ProjectCategory } from 'constants/projects';
-import { Issue, Space, ProjectVersion, Component } from '.';
+import { Issue, Space, ProjectVersion, Component, Sprint } from '.';
 
 @Entity()
 class Project extends BaseEntity {
@@ -41,6 +41,12 @@ class Project extends BaseEntity {
 
   @Column('varchar')
   category: ProjectCategory;
+
+  // JSON workflow config: per-status custom column label + optional WIP limit,
+  // e.g. [{ "status": "inprogress", "name": "開発中", "wipLimit": 3 }]. Null =
+  // use the default status labels with no limits.
+  @Column('text', { nullable: true })
+  workflow: string | null;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
@@ -74,6 +80,12 @@ class Project extends BaseEntity {
     component => component.project,
   )
   components: Component[];
+
+  @OneToMany(
+    () => Sprint,
+    sprint => sprint.project,
+  )
+  sprints: Sprint[];
 }
 
 export default Project;

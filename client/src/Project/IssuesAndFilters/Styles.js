@@ -34,6 +34,71 @@ export const FilterBar = styled.div`
   margin-bottom: 18px;
 `;
 
+export const SavedBar = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+`;
+
+export const SavedLabel = styled.div`
+  ${font.medium}
+  ${font.size(13)}
+  color: ${color.textMedium};
+`;
+
+export const Chip = styled.div`
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 4px 0 11px;
+  border-radius: 14px;
+  background: ${color.backgroundMedium};
+  ${font.size(13)}
+  color: ${color.textDark};
+  cursor: pointer;
+  &:hover {
+    background: ${color.backgroundLight};
+  }
+`;
+
+export const ChipDelete = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 5px;
+  border-radius: 50%;
+  ${font.size(15)}
+  color: ${color.textMedium};
+  &:hover {
+    background: rgba(0, 0, 0, 0.12);
+    color: ${color.textDarkest};
+  }
+`;
+
+export const SaveBox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+`;
+
+export const SaveInput = styled.input`
+  height: 30px;
+  width: 160px;
+  padding: 0 8px;
+  border: 1px solid ${color.borderLight};
+  border-radius: 4px;
+  ${font.size(13.5)}
+  &:focus {
+    border-color: ${color.borderInputFocus};
+    outline: none;
+  }
+`;
+
 export const SearchBox = styled.div`
   width: 220px;
 `;

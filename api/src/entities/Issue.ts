@@ -17,7 +17,7 @@ import {
 
 import is from 'utils/validation';
 import { IssueType, IssueStatus, IssuePriority } from 'constants/issues';
-import { Comment, Project, User, ProjectVersion, Component } from '.';
+import { Comment, Project, User, ProjectVersion, Component, Sprint } from '.';
 
 @Entity()
 class Issue extends BaseEntity {
@@ -103,6 +103,16 @@ class Issue extends BaseEntity {
   @Column('integer', { nullable: true })
   versionId: number | null;
 
+  @ManyToOne(
+    () => Sprint,
+    sprint => sprint.issues,
+    { nullable: true, onDelete: 'SET NULL' },
+  )
+  sprint: Sprint | null;
+
+  @Column('integer', { nullable: true })
+  sprintId: number | null;
+
   @OneToMany(
     () => Comment,
     comment => comment.issue,
@@ -128,6 +138,13 @@ class Issue extends BaseEntity {
 
   @RelationId((issue: Issue) => issue.components)
   componentIds: number[];
+
+  @ManyToMany(() => User)
+  @JoinTable({ name: 'issue_watchers_user' })
+  watchers: User[];
+
+  @RelationId((issue: Issue) => issue.watchers)
+  watcherIds: number[];
 
   @BeforeInsert()
   @BeforeUpdate()

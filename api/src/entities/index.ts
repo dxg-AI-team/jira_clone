@@ -1,8 +1,14 @@
+export { default as ActivityLog } from './ActivityLog';
+export { default as Attachment } from './Attachment';
 export { default as Comment } from './Comment';
 export { default as Component } from './Component';
 export { default as Issue } from './Issue';
+export { default as IssueLink } from './IssueLink';
+export { default as Notification } from './Notification';
 export { default as Page } from './Page';
+export { default as SavedFilter } from './SavedFilter';
 export { default as Project } from './Project';
 export { default as ProjectVersion } from './ProjectVersion';
 export { default as Space } from './Space';
+export { default as Sprint } from './Sprint';
 export { default as User } from './User';

@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useHistory } from 'react-router-dom';
 import { intersection } from 'lodash';
 
+import api from 'shared/utils/api';
+import useApi from 'shared/hooks/api';
+import toast from 'shared/utils/toast';
 import {
   IssueType,
   IssueStatus,
@@ -16,6 +19,7 @@ import {
   InputDebounced,
   Select,
   Avatar,
+  Button,
   IssueTypeIcon,
   IssuePriorityIcon,
 } from 'shared/components';
@@ -29,6 +33,12 @@ import {
   SearchBox,
   FilterItem,
   ClearButton,
+  SavedBar,
+  SavedLabel,
+  Chip,
+  ChipDelete,
+  SaveBox,
+  SaveInput,
   Table,
   HeaderRow,
   Row,
@@ -77,6 +87,43 @@ const propTypes = {
 const ProjectIssuesAndFilters = ({ project }) => {
   const history = useHistory();
   const [filters, mergeFilters] = useMergeState(defaultFilters);
+  const [filterName, setFilterName] = useState('');
+
+  const [{ data: filtersData }, fetchSavedFilters] = useApi.get('/saved-filters');
+  const savedFilters = (filtersData && filtersData.savedFilters) || [];
+
+  const applyFilter = savedFilter => {
+    try {
+      mergeFilters({ ...defaultFilters, ...JSON.parse(savedFilter.criteria) });
+    } catch (error) {
+      toast.error('フィルターの読み込みに失敗しました。');
+    }
+  };
+
+  const saveFilter = async () => {
+    if (!filterName.trim()) {
+      toast.error('フィルター名を入力してください。');
+      return;
+    }
+    try {
+      await api.post('/saved-filters', { name: filterName.trim(), criteria: filters });
+      setFilterName('');
+      await fetchSavedFilters();
+      toast.success('フィルターを保存しました。');
+    } catch (error) {
+      toast.error(error);
+    }
+  };
+
+  const deleteFilter = async (event, filterId) => {
+    event.stopPropagation();
+    try {
+      await api.delete(`/saved-filters/${filterId}`);
+      await fetchSavedFilters();
+    } catch (error) {
+      toast.error(error);
+    }
+  };
 
   const issues = filterAndSortIssues(project.issues || [], filters);
 
@@ -178,6 +225,33 @@ const ProjectIssuesAndFilters = ({ project }) => {
           <ClearButton onClick={() => mergeFilters(defaultFilters)}>クリア</ClearButton>
         )}
       </FilterBar>
+
+      <SavedBar>
+        <SavedLabel>保存済みフィルター:</SavedLabel>
+        {savedFilters.length === 0 ? (
+          <SavedLabel>なし</SavedLabel>
+        ) : (
+          savedFilters.map(savedFilter => (
+            <Chip key={savedFilter.id} onClick={() => applyFilter(savedFilter)}>
+              {savedFilter.name}
+              <ChipDelete title="削除" onClick={event => deleteFilter(event, savedFilter.id)}>
+                ×
+              </ChipDelete>
+            </Chip>
+          ))
+        )}
+        <SaveBox>
+          <SaveInput
+            placeholder="現在の条件を保存..."
+            value={filterName}
+            onChange={event => setFilterName(event.target.value)}
+            onKeyDown={event => event.key === 'Enter' && saveFilter()}
+          />
+          <Button variant="primary" onClick={saveFilter}>
+            保存
+          </Button>
+        </SaveBox>
+      </SavedBar>
 
       {issues.length === 0 ? (
         <Empty>条件に一致する課題がありません。</Empty>

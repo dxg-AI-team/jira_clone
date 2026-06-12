@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 
 import {
   IssueType,
@@ -27,6 +28,12 @@ import {
   BarFill,
   RowCount,
   Empty,
+  BurndownCard,
+  BurndownHead,
+  BurndownMeta,
+  Legend,
+  LegendItem,
+  LegendSwatch,
 } from './Styles';
 
 const statusColors = {
@@ -38,6 +45,136 @@ const statusColors = {
 
 const propTypes = {
   project: PropTypes.object.isRequired,
+};
+
+// Pick the sprint to chart: the active one, otherwise the most recently
+// created sprint that has both a start and an end date.
+const pickBurndownSprint = sprints => {
+  const dated = sprints.filter(s => s.startDate && s.endDate);
+  const active = dated.find(s => s.status === 'active');
+  if (active) return active;
+  return dated.slice().sort((a, b) => b.id - a.id)[0] || null;
+};
+
+// Approximate burndown. We don't snapshot remaining work daily, so the actual
+// line is reconstructed from each done issue's updatedAt as a stand-in for its
+// completion date. Work is measured in story points when present, else by
+// issue count.
+const Burndown = ({ sprint, issues }) => {
+  const start = moment(sprint.startDate).startOf('day');
+  const end = moment(sprint.endDate).endOf('day');
+  const sprintIssues = issues.filter(i => i.sprintId === sprint.id);
+
+  const usePoints = sprintIssues.some(i => i.storyPoints != null);
+  const unit = usePoints ? 'ポイント' : '件';
+  const workOf = issue => (usePoints ? Number(issue.storyPoints) || 0 : 1);
+  const scope = sprintIssues.reduce((sum, i) => sum + workOf(i), 0);
+
+  const totalDays = Math.max(1, end.diff(start, 'days') + 1);
+  const steps = Math.max(1, totalDays - 1);
+  const now = moment();
+
+  const days = [];
+  for (let i = 0; i < totalDays; i += 1) {
+    days.push(
+      moment(start)
+        .add(i, 'days')
+        .endOf('day'),
+    );
+  }
+
+  const completedWorkBy = dayEnd =>
+    sprintIssues
+      .filter(i => i.status === IssueStatus.DONE && moment(i.updatedAt).isSameOrBefore(dayEnd))
+      .reduce((sum, i) => sum + workOf(i), 0);
+
+  // Geometry
+  const W = 660;
+  const H = 260;
+  const padL = 38;
+  const padR = 16;
+  const padT = 14;
+  const padB = 30;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  const xAt = i => padL + (steps === 0 ? 0 : (i / steps) * plotW);
+  const yAt = value => padT + plotH * (1 - (scope === 0 ? 0 : value / scope));
+
+  const idealPoints = days.map((d, i) => `${xAt(i)},${yAt(scope * (1 - i / steps))}`).join(' ');
+
+  const actualPoints = days
+    .map((d, i) => ({ i, d }))
+    .filter(({ d }) => d.isSameOrBefore(now) || now.isSameOrAfter(end))
+    .map(({ i, d }) => `${xAt(i)},${yAt(scope - completedWorkBy(d))}`)
+    .join(' ');
+
+  // Y gridlines at 0, half, full scope
+  const yTicks = [0, scope / 2, scope];
+
+  return (
+    <BurndownCard>
+      <BurndownHead>
+        <CardTitle style={{ margin: 0 }}>バーンダウン — {sprint.name}</CardTitle>
+        <BurndownMeta>
+          {start.format('M/D')} 〜 {end.format('M/D')} ・ 全体 {scope} {unit}
+        </BurndownMeta>
+      </BurndownHead>
+      <Legend>
+        <LegendItem>
+          <LegendSwatch swatch={color.textLight} dashed />
+          理想線
+        </LegendItem>
+        <LegendItem>
+          <LegendSwatch swatch={color.primary} />
+          実績
+        </LegendItem>
+      </Legend>
+
+      {scope === 0 ? (
+        <Empty>このスプリントには見積もり可能な課題がありません。</Empty>
+      ) : (
+        <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="バーンダウンチャート">
+          {yTicks.map(t => (
+            <g key={t}>
+              <line
+                x1={padL}
+                y1={yAt(t)}
+                x2={W - padR}
+                y2={yAt(t)}
+                stroke={color.borderLightest}
+                strokeWidth="1"
+              />
+              <text x={padL - 6} y={yAt(t) + 4} textAnchor="end" fontSize="11" fill="#8993a4">
+                {Math.round(t)}
+              </text>
+            </g>
+          ))}
+          <text x={padL} y={H - 8} textAnchor="middle" fontSize="11" fill="#8993a4">
+            {start.format('M/D')}
+          </text>
+          <text x={W - padR} y={H - 8} textAnchor="end" fontSize="11" fill="#8993a4">
+            {end.format('M/D')}
+          </text>
+          <polyline
+            points={idealPoints}
+            fill="none"
+            stroke={color.textLight}
+            strokeWidth="2"
+            strokeDasharray="5 4"
+          />
+          {actualPoints && (
+            <polyline points={actualPoints} fill="none" stroke={color.primary} strokeWidth="2.5" />
+          )}
+        </svg>
+      )}
+    </BurndownCard>
+  );
+};
+
+Burndown.propTypes = {
+  sprint: PropTypes.object.isRequired,
+  issues: PropTypes.array.isRequired,
 };
 
 const BarChart = ({ title, rows }) => {
@@ -75,6 +212,7 @@ BarChart.propTypes = {
 const ProjectReports = ({ project }) => {
   const issues = project.issues || [];
   const users = project.users || [];
+  const burndownSprint = pickBurndownSprint(project.sprints || []);
 
   const total = issues.length;
   const doneCount = issues.filter(i => i.status === IssueStatus.DONE).length;
@@ -137,6 +275,8 @@ const ProjectReports = ({ project }) => {
           <SummaryLabel>完了率</SummaryLabel>
         </SummaryCard>
       </SummaryRow>
+
+      {burndownSprint && <Burndown sprint={burndownSprint} issues={issues} />}
 
       <Grid>
         <BarChart title="ステータス別" rows={statusRows} />

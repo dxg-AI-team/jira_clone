@@ -29,10 +29,21 @@ const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
 
   const [filters, mergeFilters] = useMergeState(defaultFilters);
 
+  // When a sprint is active, the board shows only that sprint's issues
+  // (Scrum board). Otherwise it shows every issue (Kanban-style).
+  const activeSprint = (project.sprints || []).find(sprint => sprint.status === 'active');
+  const boardProject = activeSprint
+    ? { ...project, issues: project.issues.filter(issue => issue.sprintId === activeSprint.id) }
+    : project;
+
   return (
     <Fragment>
       <Breadcrumbs
-        items={[project.space ? project.space.name : 'スペース', project.name, 'カンバンボード']}
+        items={[
+          project.space ? project.space.name : 'スペース',
+          project.name,
+          activeSprint ? activeSprint.name : 'カンバンボード',
+        ]}
       />
       <Header />
       <Filters
@@ -42,7 +53,7 @@ const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
         mergeFilters={mergeFilters}
       />
       <Lists
-        project={project}
+        project={boardProject}
         filters={filters}
         updateLocalProjectIssues={updateLocalProjectIssues}
       />
