@@ -38,10 +38,22 @@ module.exports = {
     extensions: ['*', '.js', '.jsx'],
   },
   devtool: 'eval-source-map',
+  // Poll for file changes: Windows Docker bind mounts don't deliver inotify
+  // events, so the default native watcher misses edits to ./src. Polling makes
+  // webpack-dev-server reliably recompile on host edits without a rebuild.
+  watchOptions: {
+    poll: 800,
+    aggregateTimeout: 300,
+    ignored: /node_modules/,
+  },
   devServer: {
     contentBase: path.join(__dirname, 'dev'),
     historyApiFallback: true,
     hot: true,
+    watchOptions: {
+      poll: 800,
+      ignored: /node_modules/,
+    },
   },
   plugins: [
     new webpack.DefinePlugin({

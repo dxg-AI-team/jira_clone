@@ -63,9 +63,11 @@ services:
       # time by webpack DefinePlugin so the Google Sign-In button can initialise.
       GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
     # Bind-mount the source so webpack-dev-server hot-reloads host edits
-    # without an image rebuild.
+    # without an image rebuild. webpack.config.js carries polling watchOptions
+    # (Windows bind mounts don't deliver inotify events).
     volumes:
       - ./client/src:/app/src
+      - ./client/webpack.config.js:/app/webpack.config.js
     ports:
       - "8080:8080"
     restart: unless-stopped
