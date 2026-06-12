@@ -7,8 +7,8 @@ const propTypes = {
   type: PropTypes.string.isRequired,
 };
 
-// The icon font has no dedicated "epic" glyph; reuse the component glyph for it.
-const glyphForType = { epic: 'component' };
+// The icon font has no dedicated "epic"/"subtask" glyph; reuse existing glyphs.
+const glyphForType = { epic: 'component', subtask: 'task' };
 
 const IssueTypeIcon = ({ type, ...otherProps }) => (
   <TypeIcon type={glyphForType[type] || type} color={type} size={18} {...otherProps} />

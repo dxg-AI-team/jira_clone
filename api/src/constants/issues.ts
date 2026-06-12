@@ -3,6 +3,7 @@ export enum IssueType {
   BUG = 'bug',
   STORY = 'story',
   EPIC = 'epic',
+  SUBTASK = 'subtask',
 }
 
 export enum IssueStatus {

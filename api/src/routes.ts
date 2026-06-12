@@ -9,6 +9,7 @@ import * as issues from 'controllers/issues';
 import * as notifications from 'controllers/notifications';
 import * as pages from 'controllers/pages';
 import * as savedFilters from 'controllers/savedFilters';
+import * as search from 'controllers/search';
 import * as projects from 'controllers/projects';
 import * as spaces from 'controllers/spaces';
 import * as sprints from 'controllers/sprints';
@@ -53,6 +54,8 @@ export const attachPrivateRoutes = (app: any): void => {
   app.get('/saved-filters', savedFilters.getMyFilters);
   app.post('/saved-filters', savedFilters.create);
   app.delete('/saved-filters/:filterId', savedFilters.remove);
+
+  app.get('/search', search.searchIssues);
 
   app.get('/spaces', spaces.getMySpaces);
   app.post('/spaces', spaces.create);

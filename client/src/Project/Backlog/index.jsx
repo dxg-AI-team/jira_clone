@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useHistory } from 'react-router-dom';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 import api from 'shared/utils/api';
 import toast from 'shared/utils/toast';
 import { formatDate } from 'shared/utils/dateTime';
+import { moveItemWithinArray, insertItemIntoArray } from 'shared/utils/javascript';
 import { IssueStatus } from 'shared/constants/issues';
 import {
   Button,
   ConfirmModal,
   Modal,
   Form,
-  Select,
   IssueTypeIcon,
   IssuePriorityIcon,
 } from 'shared/components';
@@ -20,7 +21,6 @@ import {
   Page,
   Header,
   Title,
-  Empty,
   SprintCard,
   SprintHeader,
   SprintHeaderMain,
@@ -35,7 +35,6 @@ import {
   IssueRow,
   IssueTitle,
   Points,
-  MoveSelect,
   FormHeading,
   FormElement,
   Actions,
@@ -46,6 +45,18 @@ const statusMeta = {
   planned: { label: '計画中', bg: '#5E6C84' },
   active: { label: '進行中', bg: '#0052cc' },
   completed: { label: '完了', bg: '#0B875B' },
+};
+
+const sortByPos = list => [...list].sort((a, b) => a.listPosition - b.listPosition);
+
+// listPosition for an issue dropped at `index` within an already-arranged list.
+const calcPosition = (arranged, index) => {
+  const prev = arranged[index - 1];
+  const next = arranged[index + 1];
+  if (!prev && !next) return 1;
+  if (!prev) return next.listPosition - 1;
+  if (!next) return prev.listPosition + 1;
+  return prev.listPosition + (next.listPosition - prev.listPosition) / 2;
 };
 
 const propTypes = {
@@ -63,18 +74,34 @@ const Backlog = ({ project, fetchProject }) => {
 
   const openSprints = sprints.filter(s => s.status !== 'completed');
   const completedSprints = sprints.filter(s => s.status === 'completed');
-  const backlogIssues = issues.filter(issue => !issue.sprintId);
+  const backlogIssues = sortByPos(issues.filter(issue => !issue.sprintId));
 
-  const issuesOfSprint = sprintId => issues.filter(issue => issue.sprintId === sprintId);
+  const issuesOfSprint = sprintId => sortByPos(issues.filter(issue => issue.sprintId === sprintId));
 
-  const moveTargets = currentSprintId =>
-    [{ value: 0, label: 'バックログ' }].concat(
-      openSprints.filter(s => s.id !== currentSprintId).map(s => ({ value: s.id, label: s.name })),
-    );
+  const sprintIdOf = droppableId =>
+    droppableId === 'backlog' ? null : Number(droppableId.replace('sprint-', ''));
 
-  const moveIssue = async (issueId, value) => {
+  const listOf = droppableId =>
+    droppableId === 'backlog' ? backlogIssues : issuesOfSprint(sprintIdOf(droppableId));
+
+  const onDragEnd = async ({ draggableId, source, destination }) => {
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+      return;
+    }
+    const issueId = Number(draggableId);
+    const droppedIssue = issues.find(i => i.id === issueId);
+    const destItems = listOf(destination.droppableId);
+    const arranged =
+      source.droppableId === destination.droppableId
+        ? moveItemWithinArray(destItems, droppedIssue, destination.index)
+        : insertItemIntoArray(destItems, droppedIssue, destination.index);
+
     try {
-      await api.put(`/issues/${issueId}`, { sprintId: value === 0 ? null : value });
+      await api.put(`/issues/${issueId}`, {
+        sprintId: sprintIdOf(destination.droppableId),
+        listPosition: calcPosition(arranged, destination.index),
+      });
       await fetchProject();
     } catch (error) {
       toast.error(error);
@@ -111,31 +138,48 @@ const Backlog = ({ project, fetchProject }) => {
     }
   };
 
-  const renderIssueRow = issue => {
+  const renderIssueRow = (issue, index) => {
     const completed = issue.status === IssueStatus.DONE;
     return (
-      <IssueRow key={issue.id}>
-        <IssueTypeIcon type={issue.type} />
-        <IssueTitle
-          style={completed ? { textDecoration: 'line-through', opacity: 0.6 } : undefined}
-          onClick={() => history.push(`/project/${project.id}/board/issues/${issue.id}`)}
-        >
-          {issue.title}
-        </IssueTitle>
-        {issue.storyPoints != null && <Points>{issue.storyPoints}</Points>}
-        <IssuePriorityIcon priority={issue.priority} />
-        <MoveSelect>
-          <Select
-            variant="empty"
-            withClearValue={false}
-            value={issue.sprintId || 0}
-            options={moveTargets(issue.sprintId || 0)}
-            onChange={value => moveIssue(issue.id, value)}
-          />
-        </MoveSelect>
-      </IssueRow>
+      <Draggable key={issue.id} draggableId={`${issue.id}`} index={index}>
+        {provided => (
+          <IssueRow
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+          >
+            <IssueTypeIcon type={issue.type} />
+            <IssueTitle
+              style={completed ? { textDecoration: 'line-through', opacity: 0.6 } : undefined}
+              onClick={() => history.push(`/project/${project.id}/board/issues/${issue.id}`)}
+            >
+              {issue.title}
+            </IssueTitle>
+            {issue.storyPoints != null && <Points>{issue.storyPoints}</Points>}
+            <IssuePriorityIcon priority={issue.priority} />
+          </IssueRow>
+        )}
+      </Draggable>
     );
   };
+
+  const renderDroppableList = (droppableId, listItems, emptyText) => (
+    <Droppable droppableId={droppableId}>
+      {provided => (
+        <IssueList ref={provided.innerRef} {...provided.droppableProps}>
+          {listItems.length === 0 && (
+            <IssueRow>
+              <IssueTitle as="div" style={{ cursor: 'default', color: '#7a869a' }}>
+                {emptyText}
+              </IssueTitle>
+            </IssueRow>
+          )}
+          {listItems.map(renderIssueRow)}
+          {provided.placeholder}
+        </IssueList>
+      )}
+    </Droppable>
+  );
 
   const renderSprint = sprint => {
     const meta = statusMeta[sprint.status] || statusMeta.planned;
@@ -185,17 +229,11 @@ const Backlog = ({ project, fetchProject }) => {
             />
           </SprintActions>
         </SprintHeader>
-        <IssueList>
-          {sprintIssues.length === 0 ? (
-            <IssueRow>
-              <IssueTitle as="div" style={{ cursor: 'default', color: '#7a869a' }}>
-                課題がありません。下のバックログから移動してください。
-              </IssueTitle>
-            </IssueRow>
-          ) : (
-            sprintIssues.map(renderIssueRow)
-          )}
-        </IssueList>
+        {renderDroppableList(
+          `sprint-${sprint.id}`,
+          sprintIssues,
+          '課題がありません。ここに課題をドラッグしてください。',
+        )}
       </SprintCard>
     );
   };
@@ -209,29 +247,27 @@ const Backlog = ({ project, fetchProject }) => {
         </Button>
       </Header>
 
-      {openSprints.map(renderSprint)}
+      <DragDropContext onDragEnd={onDragEnd}>
+        {openSprints.map(renderSprint)}
 
-      <BacklogSection>
-        <SectionTitle>
-          <span>バックログ（{backlogIssues.length} 件）</span>
-        </SectionTitle>
-        {backlogIssues.length === 0 ? (
-          <Empty>バックログに課題はありません。</Empty>
-        ) : (
-          <SprintCard>
-            <IssueList>{backlogIssues.map(renderIssueRow)}</IssueList>
-          </SprintCard>
-        )}
-      </BacklogSection>
-
-      {completedSprints.length > 0 && (
         <BacklogSection>
           <SectionTitle>
-            <span>完了したスプリント</span>
+            <span>バックログ（{backlogIssues.length} 件）</span>
           </SectionTitle>
-          {completedSprints.map(renderSprint)}
+          <SprintCard>
+            {renderDroppableList('backlog', backlogIssues, 'バックログに課題はありません。')}
+          </SprintCard>
         </BacklogSection>
-      )}
+
+        {completedSprints.length > 0 && (
+          <BacklogSection>
+            <SectionTitle>
+              <span>完了したスプリント</span>
+            </SectionTitle>
+            {completedSprints.map(renderSprint)}
+          </BacklogSection>
+        )}
+      </DragDropContext>
 
       {modalSprint && (
         <Modal

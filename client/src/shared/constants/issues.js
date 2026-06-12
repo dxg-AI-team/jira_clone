@@ -3,6 +3,7 @@ export const IssueType = {
   BUG: 'bug',
   STORY: 'story',
   EPIC: 'epic',
+  SUBTASK: 'subtask',
 };
 
 export const IssueStatus = {
@@ -25,6 +26,7 @@ export const IssueTypeCopy = {
   [IssueType.BUG]: 'バグ',
   [IssueType.STORY]: 'ストーリー',
   [IssueType.EPIC]: 'エピック',
+  [IssueType.SUBTASK]: 'サブタスク',
 };
 
 export const IssueStatusCopy = {

@@ -23,6 +23,7 @@ import Watchers from './Watchers';
 import IssueLinks from './IssueLinks';
 import Attachments from './Attachments';
 import Activity from './Activity';
+import SubTasks from './SubTasks';
 import { TopActions, TopActionsRight, Content, Left, Right } from './Styles';
 
 const propTypes = {
@@ -89,10 +90,12 @@ const ProjectBoardIssueDetails = ({
       </TopActions>
       <Content>
         <Left>
+          <SubTasks issue={issue} fetchIssue={fetchIssue} mode="parent" />
           <Title issue={issue} updateIssue={updateIssue} />
           <Description issue={issue} updateIssue={updateIssue} />
+          <SubTasks issue={issue} fetchIssue={fetchIssue} mode="children" />
           <Attachments issue={issue} fetchIssue={fetchIssue} />
-          <Comments issue={issue} fetchIssue={fetchIssue} />
+          <Comments issue={issue} fetchIssue={fetchIssue} mentionUsers={projectUsers} />
           <Activity issue={issue} />
         </Left>
         <Right>

@@ -80,7 +80,21 @@ export const getIssueWithUsersAndComments = catchErrors(async (req, res) => {
     user: a.user ? pick(a.user, ['id', 'name', 'avatarUrl']) : null,
   }));
 
-  res.respond({ issue: { ...issue, issueLinks, attachments, activity } });
+  // Child issues (sub-tasks) and the parent, for the hierarchy UI.
+  const childIssues = await Issue.find({
+    where: { parentId: issue.id },
+    order: { listPosition: 'ASC' },
+  });
+  const children = childIssues.map(c =>
+    pick(c, ['id', 'title', 'type', 'status', 'priority', 'userIds']),
+  );
+  let parent = null;
+  if (issue.parentId) {
+    const p = await Issue.findOne(issue.parentId);
+    if (p) parent = pick(p, ['id', 'title', 'type', 'status']);
+  }
+
+  res.respond({ issue: { ...issue, issueLinks, attachments, activity, children, parent } });
 });
 
 export const create = catchErrors(async (req, res) => {

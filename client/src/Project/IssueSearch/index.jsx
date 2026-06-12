@@ -32,7 +32,8 @@ const propTypes = {
 const ProjectIssueSearch = ({ project }) => {
   const [isSearchTermEmpty, setIsSearchTermEmpty] = useState(true);
 
-  const [{ data, isLoading }, fetchIssues] = useApi.get('/issues', {}, { lazy: true });
+  // Global search spans every board in the user's spaces.
+  const [{ data, isLoading }, fetchIssues] = useApi.get('/search', {}, { lazy: true });
 
   const matchingIssues = get(data, 'issues', []);
 
@@ -44,7 +45,7 @@ const ProjectIssueSearch = ({ project }) => {
     setIsSearchTermEmpty(!searchTerm);
 
     if (searchTerm) {
-      fetchIssues({ searchTerm });
+      fetchIssues({ q: searchTerm });
     }
   };
 
@@ -62,14 +63,14 @@ const ProjectIssueSearch = ({ project }) => {
 
       {isSearchTermEmpty && recentIssues.length > 0 && (
         <Fragment>
-          <SectionTitle>最近の課題</SectionTitle>
+          <SectionTitle>最近の課題（このボード）</SectionTitle>
           {recentIssues.map(renderIssue)}
         </Fragment>
       )}
 
       {!isSearchTermEmpty && matchingIssues.length > 0 && (
         <Fragment>
-          <SectionTitle>一致する課題</SectionTitle>
+          <SectionTitle>一致する課題（全ボード）</SectionTitle>
           {matchingIssues.map(renderIssue)}
         </Fragment>
       )}
@@ -86,12 +87,18 @@ const ProjectIssueSearch = ({ project }) => {
 };
 
 const renderIssue = issue => (
-  <Link key={issue.id} to={`/project/${getCurrentProjectId()}/board/issues/${issue.id}`}>
+  <Link
+    key={issue.id}
+    to={`/project/${issue.projectId || getCurrentProjectId()}/board/issues/${issue.id}`}
+  >
     <Issue>
       <IssueTypeIcon type={issue.type} size={25} />
       <IssueData>
         <IssueTitle>{issue.title}</IssueTitle>
-        <IssueTypeId>{`${issue.type}-${issue.id}`}</IssueTypeId>
+        <IssueTypeId>
+          {`${issue.type}-${issue.id}`}
+          {issue.boardName ? ` ・ ${issue.boardName}` : ''}
+        </IssueTypeId>
       </IssueData>
     </Issue>
   </Link>
