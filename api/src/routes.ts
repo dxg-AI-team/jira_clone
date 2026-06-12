@@ -6,6 +6,7 @@ import * as importer from 'controllers/import';
 import * as issues from 'controllers/issues';
 import * as pages from 'controllers/pages';
 import * as projects from 'controllers/projects';
+import * as spaces from 'controllers/spaces';
 import * as test from 'controllers/test';
 import * as users from 'controllers/users';
 import * as versions from 'controllers/versions';
@@ -31,7 +32,15 @@ export const attachPrivateRoutes = (app: any): void => {
   app.put('/issues/:issueId', issues.update);
   app.delete('/issues/:issueId', issues.remove);
 
-  app.get('/projects', projects.getMyProjects);
+  app.get('/spaces', spaces.getMySpaces);
+  app.post('/spaces', spaces.create);
+  app.get('/spaces/:spaceId', spaces.getSpace);
+  app.put('/spaces/:spaceId', spaces.update);
+  app.delete('/spaces/:spaceId', spaces.remove);
+  app.post('/spaces/:spaceId/members', spaces.addMember);
+  app.delete('/spaces/:spaceId/members/:userId', spaces.removeMember);
+
+  app.get('/boards', projects.getSpaceBoards);
   app.post('/projects', projects.create);
   app.delete('/projects/:projectId', projects.remove);
 

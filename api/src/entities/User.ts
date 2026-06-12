@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 
 import is from 'utils/validation';
-import { Comment, Issue, Project } from '.';
+import { Comment, Issue, Space } from '.';
 
 @Entity()
 class User extends BaseEntity {
@@ -58,13 +58,13 @@ class User extends BaseEntity {
   issues: Issue[];
 
   @ManyToMany(
-    () => Project,
-    project => project.users,
+    () => Space,
+    space => space.users,
   )
-  projects: Project[];
+  spaces: Space[];
 
-  @RelationId((user: User) => user.projects)
-  projectIds: number[];
+  @RelationId((user: User) => user.spaces)
+  spaceIds: number[];
 }
 
 export default User;

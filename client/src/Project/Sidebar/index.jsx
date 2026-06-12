@@ -4,7 +4,6 @@ import { NavLink, useRouteMatch, useHistory } from 'react-router-dom';
 
 import useApi from 'shared/hooks/api';
 import useOnOutsideClick from 'shared/hooks/onOutsideClick';
-import { ProjectCategoryCopy } from 'shared/constants/projects';
 import { Icon, ProjectAvatar } from 'shared/components';
 
 import {
@@ -36,42 +35,46 @@ const ProjectSidebar = ({ project }) => {
   const switcherRef = useRef();
   useOnOutsideClick(switcherRef, isSwitcherOpen, () => setSwitcherOpen(false));
 
-  const [{ data: projectsData }] = useApi.get('/projects');
-  const projects = (projectsData && projectsData.projects) || [];
+  const { spaceId } = project;
+  const [{ data: boardsData }] = useApi.get('/boards', { spaceId });
+  const boards = (boardsData && boardsData.boards) || [];
+  const spaceName = project.space ? project.space.name : '';
 
-  const goToProject = projectId => {
+  const goToBoard = boardId => {
     setSwitcherOpen(false);
-    history.push(`/project/${projectId}/summary`);
+    history.push(`/project/${boardId}/summary`);
   };
 
   return (
     <Sidebar>
       <Switcher ref={switcherRef}>
-        <ProjectInfo
-          onClick={() => setSwitcherOpen(!isSwitcherOpen)}
-          title="プロジェクトを切り替え"
-        >
+        <ProjectInfo onClick={() => setSwitcherOpen(!isSwitcherOpen)} title="ボードを切り替え">
           <ProjectAvatar name={project.name} icon={project.icon} avatarUrl={project.avatarUrl} />
           <ProjectTexts>
             <ProjectName>{project.name} ▾</ProjectName>
-            <ProjectCategory>{ProjectCategoryCopy[project.category]}プロジェクト</ProjectCategory>
+            <ProjectCategory>{spaceName}</ProjectCategory>
           </ProjectTexts>
         </ProjectInfo>
 
         {isSwitcherOpen && (
           <SwitcherDropdown>
-            {projects.map(p => (
+            {boards.map(b => (
               <SwitcherItem
-                key={p.id}
-                isActive={p.id === project.id}
-                onClick={() => goToProject(p.id)}
+                key={b.id}
+                isActive={b.id === project.id}
+                onClick={() => goToBoard(b.id)}
               >
-                {p.name}
+                {b.name}
               </SwitcherItem>
             ))}
             <SwitcherDivider />
-            <SwitcherFooter onClick={() => history.push('/projects')}>
-              すべてのプロジェクト
+            {spaceId && (
+              <SwitcherFooter onClick={() => history.push(`/space/${spaceId}`)}>
+                スペースのボード一覧
+              </SwitcherFooter>
+            )}
+            <SwitcherFooter onClick={() => history.push('/spaces')}>
+              すべてのスペース
             </SwitcherFooter>
           </SwitcherDropdown>
         )}
@@ -79,8 +82,8 @@ const ProjectSidebar = ({ project }) => {
 
       {renderLinkItem(match, '要約', 'reports', '/summary')}
       {renderLinkItem(match, 'カンバンボード', 'board', '/board')}
-      {renderLinkItem(match, 'プロジェクト設定', 'settings', '/settings')}
-      {renderLinkItem(match, 'ユーザー', 'menu', '/users')}
+      {renderLinkItem(match, 'ボード設定', 'settings', '/settings')}
+      {renderLinkItem(match, 'メンバー', 'menu', '/users')}
       {renderLinkItem(match, 'インポート', 'attach', '/import')}
       <Divider />
       {renderLinkItem(match, 'リリース', 'shipping', '/releases')}

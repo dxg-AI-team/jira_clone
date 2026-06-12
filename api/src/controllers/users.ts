@@ -1,7 +1,7 @@
 import { getConnection } from 'typeorm';
 
 import { catchErrors, AuthorizationError } from 'errors';
-import { User, Project } from 'entities';
+import { User, Project, Space } from 'entities';
 import { createEntity, updateEntity, deleteEntity, findEntityOrThrow } from 'utils/typeorm';
 
 const requireAdmin = (req: any): void => {
@@ -10,34 +10,40 @@ const requireAdmin = (req: any): void => {
   }
 };
 
+// Members live on the space the current board belongs to.
+const getSpaceIdForBoard = async (projectId: number): Promise<number> => {
+  const board = await findEntityOrThrow(Project, projectId);
+  return board.spaceId;
+};
+
+const addMembership = (spaceId: number, userId: number): Promise<void> =>
+  getConnection()
+    .createQueryBuilder()
+    .relation(Space, 'users')
+    .of(spaceId)
+    .add(userId);
+
 // Guard against removing/demoting the last remaining admin in the whole system.
 const ensureNotLastAdmin = async (excludeUserId: number): Promise<void> => {
-  const adminCount = await User.count({ where: { role: 'admin' } });
   const admins = await User.find({ where: { role: 'admin' } });
   const remaining = admins.filter(u => u.id !== excludeUserId);
-  if (adminCount <= 1 || remaining.length === 0) {
+  if (remaining.length === 0) {
     throw new AuthorizationError('最後の管理者は降格・削除できません。');
   }
 };
-
-const addMembership = (projectId: number, userId: number): Promise<void> =>
-  getConnection()
-    .createQueryBuilder()
-    .relation(Project, 'users')
-    .of(projectId)
-    .add(userId);
 
 export const getCurrentUser = catchErrors((req, res) => {
   res.respond({ currentUser: req.currentUser });
 });
 
-// Members of the currently selected project.
+// Members of the space the current board belongs to.
 export const getProjectUsers = catchErrors(async (req, res) => {
-  const project = await findEntityOrThrow(Project, req.projectId, { relations: ['users'] });
-  res.respond({ users: project.users });
+  const spaceId = await getSpaceIdForBoard(req.projectId);
+  const space = await findEntityOrThrow(Space, spaceId, { relations: ['users'] });
+  res.respond({ users: space.users });
 });
 
-// Create a brand-new global user and add them to the current project.
+// Create a brand-new global user and add them to the current board's space.
 export const create = catchErrors(async (req, res) => {
   requireAdmin(req);
   const { name, email, avatarUrl, role } = req.body;
@@ -50,7 +56,8 @@ export const create = catchErrors(async (req, res) => {
   } as Partial<User>);
 
   if (req.projectId) {
-    await addMembership(req.projectId, user.id);
+    const spaceId = await getSpaceIdForBoard(req.projectId);
+    await addMembership(spaceId, user.id);
   }
 
   res.respond({ user });
@@ -99,34 +106,36 @@ export const remove = catchErrors(async (req, res) => {
   const connection = getConnection();
   await connection.query('DELETE FROM comment WHERE "userId" = $1', [targetId]);
   await connection.query('DELETE FROM issue_users_user WHERE "userId" = $1', [targetId]);
-  await connection.query('DELETE FROM project_users_user WHERE "userId" = $1', [targetId]);
+  await connection.query('DELETE FROM space_users_user WHERE "userId" = $1', [targetId]);
 
   const user = await deleteEntity(User, targetId);
   res.respond({ user });
 });
 
-// Add an existing global user as a member of the current project.
+// Add an existing global user to the current board's space.
 export const addMember = catchErrors(async (req, res) => {
   requireAdmin(req);
   const userId = Number(req.body.userId);
   const user = await findEntityOrThrow(User, userId);
-  await addMembership(req.projectId, userId);
+  const spaceId = await getSpaceIdForBoard(req.projectId);
+  await addMembership(spaceId, userId);
   res.respond({ user });
 });
 
-// Remove a member from the current project (does not delete the global user).
+// Remove a member from the current board's space.
 export const removeMember = catchErrors(async (req, res) => {
   requireAdmin(req);
   const userId = Number(req.params.userId);
+  const spaceId = await getSpaceIdForBoard(req.projectId);
   await getConnection()
     .createQueryBuilder()
-    .relation(Project, 'users')
-    .of(req.projectId)
+    .relation(Space, 'users')
+    .of(spaceId)
     .remove(userId);
   res.respond({ userId });
 });
 
-// All global users (for picking who to add to a project).
+// All global users (for picking who to add).
 export const getAllUsers = catchErrors(async (_req, res) => {
   const users = await User.find({ order: { id: 'ASC' } });
   res.respond({ users });

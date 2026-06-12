@@ -6,13 +6,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-  ManyToMany,
-  JoinTable,
+  ManyToOne,
 } from 'typeorm';
 
 import is from 'utils/validation';
 import { ProjectCategory } from 'constants/projects';
-import { Issue, User, ProjectVersion, Component } from '.';
+import { Issue, Space, ProjectVersion, Component } from '.';
 
 @Entity()
 class Project extends BaseEntity {
@@ -55,12 +54,14 @@ class Project extends BaseEntity {
   )
   issues: Issue[];
 
-  @ManyToMany(
-    () => User,
-    user => user.projects,
+  @ManyToOne(
+    () => Space,
+    space => space.boards,
   )
-  @JoinTable()
-  users: User[];
+  space: Space;
+
+  @Column('integer', { nullable: true })
+  spaceId: number;
 
   @OneToMany(
     () => ProjectVersion,

@@ -36,7 +36,7 @@ export const TopActions = styled.div`
   }
 `;
 
-export const LogoutLink = styled.div`
+export const LinkText = styled.div`
   cursor: pointer;
   ${font.size(14)}
   color: ${color.textMedium};
@@ -54,8 +54,10 @@ export const Grid = styled.div`
   }
 `;
 
-export const ProjectCard = styled.div`
+export const Card = styled.div`
   position: relative;
+  display: flex;
+  align-items: center;
   padding: 20px;
   border: 1px solid ${color.borderLightest};
   border-radius: 8px;
@@ -67,24 +69,9 @@ export const ProjectCard = styled.div`
   }
 `;
 
-export const CardHeader = styled.div`
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-`;
-
-export const CardIcon = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  margin-right: 12px;
-  border-radius: 6px;
-  color: #fff;
-  background: ${color.primary};
-  ${font.bold}
-  ${font.size(16)}
+export const CardMeta = styled.div`
+  margin-left: 14px;
+  min-width: 0;
 `;
 
 export const CardName = styled.div`
@@ -94,15 +81,8 @@ export const CardName = styled.div`
   ${mixin.truncateText}
 `;
 
-export const CardCategory = styled.div`
+export const CardSub = styled.div`
   ${font.size(13)}
-  color: ${color.textMedium};
-`;
-
-export const CardDescription = styled.div`
-  margin-top: 6px;
-  min-height: 36px;
-  ${font.size(13.5)}
   color: ${color.textMedium};
 `;
 
@@ -135,4 +115,27 @@ export const FormElement = styled(Form.Element)`
 export const Actions = styled.div`
   display: flex;
   padding-top: 28px;
+`;
+
+export const IconChoices = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 16px;
+`;
+
+export const IconChoice = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  cursor: pointer;
+  ${font.size(20)}
+  background: ${color.backgroundLightest};
+  border: 2px solid ${props => (props.isSelected ? color.primary : 'transparent')};
+  &:hover {
+    background: ${color.backgroundLight};
+  }
 `;
