@@ -13,13 +13,18 @@ export const getProjectSprints = catchErrors(async (req, res) => {
   res.respond({ sprints });
 });
 
+// Treat empty-string dates (from form fields left blank) as null so Postgres
+// doesn't try to parse "" as a timestamp.
+const emptyToNull = (value: unknown): unknown =>
+  value === '' || value === undefined ? null : value;
+
 export const create = catchErrors(async (req, res) => {
   const { name, goal, startDate, endDate } = req.body;
   const sprint = await createEntity(Sprint, {
     name,
     goal,
-    startDate,
-    endDate,
+    startDate: emptyToNull(startDate),
+    endDate: emptyToNull(endDate),
     status: 'planned',
     projectId: req.projectId,
   });
@@ -27,7 +32,10 @@ export const create = catchErrors(async (req, res) => {
 });
 
 export const update = catchErrors(async (req, res) => {
-  const sprint = await updateEntity(Sprint, req.params.sprintId, req.body);
+  const input = { ...req.body };
+  if ('startDate' in input) input.startDate = emptyToNull(input.startDate);
+  if ('endDate' in input) input.endDate = emptyToNull(input.endDate);
+  const sprint = await updateEntity(Sprint, req.params.sprintId, input);
   res.respond({ sprint });
 });
 
