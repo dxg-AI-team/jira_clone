@@ -1,6 +1,21 @@
 import { FindOneOptions } from 'typeorm/find-options/FindOneOptions';
 
-import { Project, ProjectVersion, Component, User, Issue, Comment, Page, Space } from 'entities';
+import {
+  Project,
+  ProjectVersion,
+  Component,
+  User,
+  Issue,
+  Comment,
+  Page,
+  Space,
+  Sprint,
+  Attachment,
+  IssueLink,
+  Notification,
+  ActivityLog,
+  SavedFilter,
+} from 'entities';
 import { EntityNotFoundError, BadUserInputError } from 'errors';
 import { generateErrors } from 'utils/validation';
 
@@ -12,17 +27,43 @@ type EntityConstructor =
   | typeof Issue
   | typeof Comment
   | typeof Page
-  | typeof Space;
-type EntityInstance = Project | ProjectVersion | Component | User | Issue | Comment | Page | Space;
+  | typeof Space
+  | typeof Sprint
+  | typeof Attachment
+  | typeof IssueLink
+  | typeof Notification
+  | typeof ActivityLog
+  | typeof SavedFilter;
+type EntityInstance =
+  | Project
+  | ProjectVersion
+  | Component
+  | User
+  | Issue
+  | Comment
+  | Page
+  | Space
+  | Sprint
+  | Attachment
+  | IssueLink
+  | Notification
+  | ActivityLog
+  | SavedFilter;
 
 const entities: { [key: string]: EntityConstructor } = {
+  ActivityLog,
+  Attachment,
   Comment,
   Component,
   Issue,
+  IssueLink,
+  Notification,
   Page,
   Project,
   ProjectVersion,
+  SavedFilter,
   Space,
+  Sprint,
   User,
 };
 

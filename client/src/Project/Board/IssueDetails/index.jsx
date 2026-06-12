@@ -19,6 +19,10 @@ import Components from './Components';
 import Attributes from './Attributes';
 import EstimateTracking from './EstimateTracking';
 import Dates from './Dates';
+import Watchers from './Watchers';
+import IssueLinks from './IssueLinks';
+import Attachments from './Attachments';
+import Activity from './Activity';
 import { TopActions, TopActionsRight, Content, Left, Right } from './Styles';
 
 const propTypes = {
@@ -52,6 +56,9 @@ const ProjectBoardIssueDetails = ({
   const updateLocalIssueDetails = fields =>
     setLocalData(currentData => ({ issue: { ...currentData.issue, ...fields } }));
 
+  const updateLocalIssueWatchers = watcherIds =>
+    setLocalData(currentData => ({ issue: { ...currentData.issue, watcherIds } }));
+
   const updateIssue = updatedFields => {
     api.optimisticUpdate(`/issues/${issueId}`, {
       updatedFields,
@@ -84,11 +91,14 @@ const ProjectBoardIssueDetails = ({
         <Left>
           <Title issue={issue} updateIssue={updateIssue} />
           <Description issue={issue} updateIssue={updateIssue} />
+          <Attachments issue={issue} fetchIssue={fetchIssue} />
           <Comments issue={issue} fetchIssue={fetchIssue} />
+          <Activity issue={issue} />
         </Left>
         <Right>
           <Status issue={issue} updateIssue={updateIssue} />
           <AssigneesReporter issue={issue} updateIssue={updateIssue} projectUsers={projectUsers} />
+          <Watchers issue={issue} updateLocalIssueWatchers={updateLocalIssueWatchers} />
           <Priority issue={issue} updateIssue={updateIssue} />
           <Version issue={issue} updateIssue={updateIssue} projectVersions={projectVersions} />
           <Components
@@ -97,6 +107,7 @@ const ProjectBoardIssueDetails = ({
             projectComponents={projectComponents}
           />
           <Attributes issue={issue} updateIssue={updateIssue} projectIssues={projectIssues} />
+          <IssueLinks issue={issue} projectIssues={projectIssues} fetchIssue={fetchIssue} />
           <EstimateTracking issue={issue} updateIssue={updateIssue} />
           <Dates issue={issue} />
         </Right>

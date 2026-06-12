@@ -25,6 +25,13 @@ export const IssuesCount = styled.span`
   ${font.size(13)};
 `;
 
+export const WipLimit = styled.span`
+  text-transform: none;
+  ${font.size(12)};
+  ${font.medium};
+  color: ${props => (props.over ? color.danger : color.textLight)};
+`;
+
 export const Issues = styled.div`
   height: 100%;
   padding: 0 5px;

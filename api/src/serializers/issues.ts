@@ -19,4 +19,5 @@ export const issuePartial = (issue: Issue): Partial<Issue> =>
     'dueDate',
     'labels',
     'parentId',
+    'sprintId',
   ]);

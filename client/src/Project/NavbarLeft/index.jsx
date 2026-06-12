@@ -5,6 +5,7 @@ import history from 'browserHistory';
 import { removeStoredAuthToken } from 'shared/utils/authToken';
 import { Icon, AboutTooltip } from 'shared/components';
 
+import Notifications from './Notifications';
 import { NavLeft, LogoLink, StyledLogo, Bottom, Item, ItemText } from './Styles';
 
 const propTypes = {
@@ -35,6 +36,8 @@ const ProjectNavbarLeft = ({ issueSearchModalOpen, issueCreateModalOpen }) => (
       <Icon type="plus" size={27} />
       <ItemText>課題を作成</ItemText>
     </Item>
+
+    <Notifications />
 
     <Bottom>
       <Item onClick={handleLogout}>

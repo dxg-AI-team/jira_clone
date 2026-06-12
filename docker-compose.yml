@@ -42,6 +42,13 @@ services:
       # Google OAuth client ID — used to verify Google ID tokens. Provide it via
       # a .env file at the repo root: GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
       GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+    # Bind-mount the source so nodemon picks up host edits and restarts live
+    # (no image rebuild needed for code changes). node_modules stays the
+    # container's own copy because only src is mounted. nodemon.json enables
+    # polling — Windows bind mounts don't deliver inotify events.
+    volumes:
+      - ./api/src:/app/src
+      - ./api/nodemon.json:/app/nodemon.json
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -55,6 +62,10 @@ services:
       # Same Google OAuth client ID — inlined into the front-end bundle at build
       # time by webpack DefinePlugin so the Google Sign-In button can initialise.
       GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+    # Bind-mount the source so webpack-dev-server hot-reloads host edits
+    # without an image rebuild.
+    volumes:
+      - ./client/src:/app/src
     ports:
       - "8080:8080"
     restart: unless-stopped

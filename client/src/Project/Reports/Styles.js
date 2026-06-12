@@ -110,3 +110,44 @@ export const Empty = styled.div`
   ${font.size(14)}
   color: ${color.textMedium};
 `;
+
+export const BurndownCard = styled.div`
+  margin-bottom: 26px;
+  padding: 20px 22px 24px;
+  border: 1px solid ${color.borderLightest};
+  border-radius: 6px;
+  background: #fff;
+`;
+
+export const BurndownHead = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 4px;
+`;
+
+export const BurndownMeta = styled.div`
+  ${font.size(13)}
+  color: ${color.textMedium};
+`;
+
+export const Legend = styled.div`
+  display: flex;
+  gap: 18px;
+  margin: 6px 0 14px;
+  ${font.size(13)}
+  color: ${color.textMedium};
+`;
+
+export const LegendItem = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+export const LegendSwatch = styled.span`
+  display: inline-block;
+  width: 22px;
+  height: 0;
+  margin-right: 7px;
+  border-top: ${props => (props.dashed ? '2px dashed' : '3px solid')} ${props => props.swatch};
+`;
