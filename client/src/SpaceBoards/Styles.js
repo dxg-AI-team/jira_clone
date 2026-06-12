@@ -160,3 +160,26 @@ export const Actions = styled.div`
   display: flex;
   padding-top: 28px;
 `;
+
+export const IconChoices = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 16px;
+`;
+
+export const IconChoice = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  cursor: pointer;
+  ${font.size(20)}
+  background: ${color.backgroundLightest};
+  border: 2px solid ${props => (props.isSelected ? color.primary : 'transparent')};
+  &:hover {
+    background: ${color.backgroundLight};
+  }
+`;

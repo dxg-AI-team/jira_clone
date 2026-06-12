@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useHistory, useParams } from 'react-router-dom';
+import { useFormikContext } from 'formik';
 
 import api from 'shared/utils/api';
 import toast from 'shared/utils/toast';
@@ -41,12 +42,33 @@ import {
   FormHeading,
   FormElement,
   Actions,
+  IconChoices,
+  IconChoice,
 } from './Styles';
 
 const categoryOptions = Object.values(ProjectCategory).map(category => ({
   value: category,
   label: ProjectCategoryCopy[category],
 }));
+
+const iconOptions = ['🏢', '🚀', '🐞', '💼', '🎨', '⚙️', '📊', '🔧', '🌟', '📁', '💡', '🧩'];
+
+const IconPicker = () => {
+  const { values, setFieldValue } = useFormikContext();
+  return (
+    <IconChoices>
+      {iconOptions.map(icon => (
+        <IconChoice
+          key={icon}
+          isSelected={values.icon === icon}
+          onClick={() => setFieldValue('icon', values.icon === icon ? null : icon)}
+        >
+          {icon}
+        </IconChoice>
+      ))}
+    </IconChoices>
+  );
+};
 
 const SpaceBoards = () => {
   const history = useHistory();
@@ -58,6 +80,7 @@ const SpaceBoards = () => {
 
   const [isBoardOpen, setBoardOpen] = useState(false);
   const [isMemberOpen, setMemberOpen] = useState(false);
+  const [isEditOpen, setEditOpen] = useState(false);
 
   if (isLoading && !data) return <PageLoader />;
   if (error) return <PageError />;
@@ -117,6 +140,11 @@ const SpaceBoards = () => {
           <HeaderMeta>
             <SpaceName>{space.name}</SpaceName>
           </HeaderMeta>
+          {isAdmin && (
+            <Button variant="secondary" icon="settings" onClick={() => setEditOpen(true)}>
+              編集
+            </Button>
+          )}
         </Header>
 
         <SectionHead>
@@ -189,6 +217,25 @@ const SpaceBoards = () => {
           ))}
         </MemberList>
 
+        {isEditOpen && (
+          <Modal
+            isOpen
+            width={520}
+            onClose={() => setEditOpen(false)}
+            renderContent={modal => (
+              <SpaceEditForm
+                spaceId={spaceId}
+                space={space}
+                onSuccess={async () => {
+                  await fetchSpace();
+                  modal.close();
+                  setEditOpen(false);
+                }}
+              />
+            )}
+          />
+        )}
+
         {isBoardOpen && (
           <Modal
             isOpen
@@ -229,6 +276,37 @@ const SpaceBoards = () => {
     </Page>
   );
 };
+
+const SpaceEditForm = ({ spaceId, space, onSuccess }) => (
+  <Form
+    enableReinitialize
+    initialValues={Form.initialValues(space, get => ({
+      name: get('name', ''),
+      icon: get('icon', null),
+    }))}
+    validations={{ name: [Form.is.required(), Form.is.maxLength(100)] }}
+    onSubmit={async (values, form) => {
+      try {
+        await api.put(`/spaces/${spaceId}`, values);
+        toast.success('スペースを更新しました。');
+        onSuccess();
+      } catch (error) {
+        Form.handleAPIError(error, form);
+      }
+    }}
+  >
+    <FormElement>
+      <FormHeading>スペースを編集</FormHeading>
+      <Form.Field.Input name="name" label="名前" />
+      <IconPicker />
+      <Actions>
+        <Button type="submit" variant="primary">
+          更新
+        </Button>
+      </Actions>
+    </FormElement>
+  </Form>
+);
 
 const BoardForm = ({ spaceId, onSuccess }) => (
   <Form
@@ -294,6 +372,11 @@ const MemberForm = ({ spaceId, nonMembers, onSuccess }) => {
   );
 };
 
+SpaceEditForm.propTypes = {
+  spaceId: PropTypes.string.isRequired,
+  space: PropTypes.object.isRequired,
+  onSuccess: PropTypes.func.isRequired,
+};
 BoardForm.propTypes = {
   spaceId: PropTypes.string.isRequired,
   onSuccess: PropTypes.func.isRequired,
