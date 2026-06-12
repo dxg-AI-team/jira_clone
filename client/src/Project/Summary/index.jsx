@@ -93,12 +93,18 @@ const ProjectSummary = ({ project }) => {
   ).length;
   const updatedLast7 = issues.filter(i => within7Days(i.updatedAt)).length;
   const createdLast7 = issues.filter(i => within7Days(i.createdAt)).length;
+  const dueSoon = issues.filter(
+    i =>
+      i.dueDate &&
+      i.status !== IssueStatus.DONE &&
+      moment(i.dueDate).isBefore(moment().add(7, 'days')),
+  ).length;
 
   const stats = [
     { value: completedLast7, label: '過去 7 日間に完了', icon: 'board', bg: color.success },
     { value: updatedLast7, label: '過去 7 日間に更新', icon: 'reports', bg: color.primary },
     { value: createdLast7, label: '過去 7 日間に作成', icon: 'plus', bg: '#6554c0' },
-    { value: total, label: '課題の総数', icon: 'issues', bg: '#5e6c84' },
+    { value: dueSoon, label: '期限 7 日以内', icon: 'calendar', bg: '#d04437' },
   ];
 
   const statusData = Object.values(IssueStatus).map(status => ({

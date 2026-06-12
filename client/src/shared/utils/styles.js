@@ -32,6 +32,7 @@ export const issueTypeColors = {
   [IssueType.TASK]: '#4FADE6', // blue
   [IssueType.BUG]: '#E44D42', // red
   [IssueType.STORY]: '#65BA43', // green
+  [IssueType.EPIC]: '#6554C0', // purple
 };
 
 export const issuePriorityColors = {

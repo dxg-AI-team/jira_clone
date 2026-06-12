@@ -47,6 +47,8 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
         priority: IssuePriority.MEDIUM,
         versionId: null,
         componentIds: [],
+        storyPoints: null,
+        dueDate: '',
       }}
       validations={{
         type: Form.is.required(),
@@ -62,6 +64,8 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
             projectId: project.id,
             users: values.userIds.map(id => ({ id })),
             components: values.componentIds.map(id => ({ id })),
+            storyPoints: values.storyPoints ? Number(values.storyPoints) : null,
+            dueDate: values.dueDate || null,
           });
           await fetchProject();
           toast.success('課題を作成しました。');
@@ -130,6 +134,8 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
             }))}
           />
         )}
+        <Form.Field.Input name="storyPoints" label="ストーリーポイント" />
+        <Form.Field.DatePicker name="dueDate" label="期日" withTime={false} />
         <Actions>
           <ActionButton type="submit" variant="primary" isWorking={isCreating}>
             課題を作成

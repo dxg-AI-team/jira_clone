@@ -15,4 +15,8 @@ export const issuePartial = (issue: Issue): Partial<Issue> =>
     'userIds',
     'versionId',
     'componentIds',
+    'storyPoints',
+    'dueDate',
+    'labels',
+    'parentId',
   ]);

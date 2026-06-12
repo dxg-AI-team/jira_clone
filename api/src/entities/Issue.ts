@@ -63,6 +63,18 @@ class Issue extends BaseEntity {
   @Column('integer', { nullable: true })
   timeRemaining: number | null;
 
+  @Column('integer', { nullable: true })
+  storyPoints: number | null;
+
+  @Column('timestamp', { nullable: true })
+  dueDate: Date | null;
+
+  @Column('simple-array', { nullable: true })
+  labels: string[];
+
+  @Column('integer', { nullable: true })
+  parentId: number | null;
+
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 

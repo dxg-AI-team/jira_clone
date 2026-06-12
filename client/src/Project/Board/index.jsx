@@ -61,6 +61,7 @@ const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
                 projectUsers={project.users}
                 projectVersions={project.versions}
                 projectComponents={project.components}
+                projectIssues={project.issues}
                 fetchProject={fetchProject}
                 updateLocalProjectIssues={updateLocalProjectIssues}
                 modalClose={modal.close}
