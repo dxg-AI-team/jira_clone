@@ -135,7 +135,7 @@ export const removeMember = catchErrors(async (req, res) => {
   res.respond({ userId });
 });
 
-// All global users (for picking who to add).
+// All global users (for picking who to add to a space).
 export const getAllUsers = catchErrors(async (_req, res) => {
   const users = await User.find({ order: { id: 'ASC' } });
   res.respond({ users });

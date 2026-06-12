@@ -31,7 +31,9 @@ const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
 
   return (
     <Fragment>
-      <Breadcrumbs items={['プロジェクト', project.name, 'カンバンボード']} />
+      <Breadcrumbs
+        items={[project.space ? project.space.name : 'スペース', project.name, 'カンバンボード']}
+      />
       <Header />
       <Filters
         projectUsers={project.users}

@@ -74,8 +74,10 @@ const ProjectSettings = ({ project, fetchProject }) => {
     >
       <FormCont>
         <FormElement>
-          <Breadcrumbs items={['プロジェクト', project.name, 'プロジェクト詳細']} />
-          <FormHeading>プロジェクト詳細</FormHeading>
+          <Breadcrumbs
+            items={[project.space ? project.space.name : 'スペース', project.name, 'ボード設定']}
+          />
+          <FormHeading>ボード設定</FormHeading>
 
           <Form.Field.Input name="name" label="名前" />
           <IconPicker />
@@ -90,11 +92,7 @@ const ProjectSettings = ({ project, fetchProject }) => {
             label="説明"
             tip="プロジェクトをできるだけ詳しく記述してください。"
           />
-          <Form.Field.Select
-            name="category"
-            label="プロジェクトカテゴリ"
-            options={categoryOptions}
-          />
+          <Form.Field.Select name="category" label="ボードのカテゴリ" options={categoryOptions} />
 
           <ActionButton type="submit" variant="primary" isWorking={isUpdating}>
             変更を保存
