@@ -58,6 +58,15 @@ export const googleLogin = catchErrors(async (req, res) => {
     picture: payload.picture,
   });
 
+  // Allowlist model: only pre-registered (admin-invited) accounts may sign in.
+  if (!user) {
+    throw new CustomError(
+      'このアプリへのアクセス権がありません。管理者にメンバー追加を依頼してください。',
+      'ACCESS_NOT_ALLOWED',
+      403,
+    );
+  }
+
   res.respond({
     authToken: signToken({ sub: user.id }),
   });

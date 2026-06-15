@@ -8,10 +8,12 @@ export type GooglePayload = {
   picture?: string;
 };
 
-// Resolve a Google-authenticated user to a global User record: match by googleId,
-// then by email (linking the account), otherwise create a new global user. The very
-// first user becomes an admin. Project membership is managed separately.
-const findOrCreateGoogleUser = async (payload: GooglePayload): Promise<User> => {
+// Resolve a Google-authenticated user to a global User record (allowlist model):
+// match by googleId, then by email (linking the account). A user is only allowed
+// in if they already exist — i.e. an admin pre-added them by email — OR the
+// database is completely empty (first-run bootstrap: that first user becomes the
+// admin). Otherwise this returns null and the caller denies access.
+const findOrCreateGoogleUser = async (payload: GooglePayload): Promise<User | null> => {
   const { sub: googleId, email, name, picture } = payload;
 
   let user: User | undefined;
@@ -19,7 +21,10 @@ const findOrCreateGoogleUser = async (payload: GooglePayload): Promise<User> => 
     user = await User.findOne({ where: { googleId } });
   }
   if (!user && email) {
-    user = await User.findOne({ where: { email } });
+    // Case-insensitive match so an admin-invited email links regardless of case.
+    user = await User.createQueryBuilder('u')
+      .where('LOWER(u.email) = LOWER(:email)', { email })
+      .getOne();
   }
 
   if (user) {
@@ -38,14 +43,19 @@ const findOrCreateGoogleUser = async (payload: GooglePayload): Promise<User> => 
     return user;
   }
 
-  const adminCount = await User.count({ where: { role: 'admin' } });
+  // Not pre-registered. Only allow creating an account when the DB is empty
+  // (bootstraps the very first admin on a fresh deployment).
+  const userCount = await User.count();
+  if (userCount > 0) {
+    return null;
+  }
 
   return createEntity(User, {
     name: name || email || 'User',
     email: email || '',
     avatarUrl: picture || '',
     googleId: googleId || null,
-    role: adminCount === 0 ? 'admin' : 'member',
+    role: 'admin',
   } as Partial<User>);
 };
 

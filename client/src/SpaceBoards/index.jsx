@@ -78,7 +78,6 @@ const SpaceBoards = () => {
 
   const [{ data, error, isLoading }, fetchSpace] = useApi.get(`/spaces/${spaceId}`, { spaceId });
   const [{ data: currentUserData }] = useApi.get('/currentUser');
-  const [{ data: allUsersData }, fetchAllUsers] = useApi.get('/users/all');
 
   const [isBoardOpen, setBoardOpen] = useState(false);
   const [isMemberOpen, setMemberOpen] = useState(false);
@@ -97,12 +96,9 @@ const SpaceBoards = () => {
     !!currentUser && (currentUser.role === 'admin' || adminIds.includes(currentUser.id));
   const boards = space.boards || [];
   const members = space.users || [];
-  const allUsers = (allUsersData && allUsersData.users) || [];
-  const nonMembers = allUsers.filter(u => !members.some(m => m.id === u.id));
 
   const refresh = async () => {
     await fetchSpace();
-    await fetchAllUsers();
   };
 
   const setAdmin = async (userId, makeAdmin) => {
@@ -303,7 +299,6 @@ const SpaceBoards = () => {
             renderContent={modal => (
               <MemberForm
                 spaceId={spaceId}
-                nonMembers={nonMembers}
                 onSuccess={async () => {
                   await refresh();
                   modal.close();
@@ -379,39 +374,36 @@ const BoardForm = ({ spaceId, onSuccess }) => (
   </Form>
 );
 
-const MemberForm = ({ spaceId, nonMembers, onSuccess }) => {
-  const userOptions = nonMembers.map(u => ({ value: u.id, label: `${u.name}（${u.email}）` }));
-  return (
-    <Form
-      initialValues={{ userId: null }}
-      validations={{ userId: Form.is.required() }}
-      onSubmit={async (values, form) => {
-        try {
-          await api.post(`/spaces/${spaceId}/members`, { userId: values.userId });
-          toast.success('メンバーを追加しました。');
-          onSuccess();
-        } catch (error) {
-          Form.handleAPIError(error, form);
-        }
-      }}
-    >
-      <FormElement>
-        <FormHeading>メンバーを追加</FormHeading>
-        <Form.Field.Select
-          name="userId"
-          label="ユーザー"
-          options={userOptions}
-          tip={userOptions.length === 0 ? '追加できる既存ユーザーがいません。' : undefined}
-        />
-        <Actions>
-          <Button type="submit" variant="primary">
-            追加
-          </Button>
-        </Actions>
-      </FormElement>
-    </Form>
-  );
-};
+const MemberForm = ({ spaceId, onSuccess }) => (
+  <Form
+    initialValues={{ email: '', name: '' }}
+    validations={{ email: [Form.is.required(), Form.is.email()] }}
+    onSubmit={async (values, form) => {
+      try {
+        await api.post(`/spaces/${spaceId}/members`, { email: values.email, name: values.name });
+        toast.success('メンバーを追加しました。');
+        onSuccess();
+      } catch (error) {
+        Form.handleAPIError(error, form);
+      }
+    }}
+  >
+    <FormElement>
+      <FormHeading>メンバーを追加</FormHeading>
+      <Form.Field.Input
+        name="email"
+        label="メールアドレス"
+        tip="このメールの Google アカウントでログインできるようになります（招待制）。"
+      />
+      <Form.Field.Input name="name" label="名前（任意）" />
+      <Actions>
+        <Button type="submit" variant="primary">
+          追加
+        </Button>
+      </Actions>
+    </FormElement>
+  </Form>
+);
 
 SpaceEditForm.propTypes = {
   spaceId: PropTypes.string.isRequired,
@@ -424,7 +416,6 @@ BoardForm.propTypes = {
 };
 MemberForm.propTypes = {
   spaceId: PropTypes.string.isRequired,
-  nonMembers: PropTypes.array.isRequired,
   onSuccess: PropTypes.func.isRequired,
 };
 

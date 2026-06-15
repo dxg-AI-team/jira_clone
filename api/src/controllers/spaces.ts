@@ -1,7 +1,7 @@
 import { getConnection } from 'typeorm';
 
 import { Space, User } from 'entities';
-import { catchErrors, AuthorizationError } from 'errors';
+import { catchErrors, AuthorizationError, BadUserInputError } from 'errors';
 import { createEntity, updateEntity, findEntityOrThrow } from 'utils/typeorm';
 
 const requireAdmin = (req: any): void => {
@@ -115,12 +115,36 @@ export const remove = catchErrors(async (req, res) => {
   res.respond({ space });
 });
 
+// Add a member to a space. Accepts either an existing { userId } or an { email }
+// (+ optional name) — the email path pre-registers (invites) the user so they
+// can sign in later under the allowlist model.
 export const addMember = catchErrors(async (req, res) => {
   const spaceId = Number(req.params.spaceId);
   await requireSpaceAdmin(req, spaceId);
-  const userId = Number(req.body.userId);
-  const user = await findEntityOrThrow(User, userId);
-  await addToRelation('users', spaceId, userId);
+
+  let user: User | undefined;
+
+  if (req.body.userId) {
+    user = await findEntityOrThrow(User, Number(req.body.userId));
+  } else if (req.body.email) {
+    const email = String(req.body.email).trim();
+    user = await User.createQueryBuilder('u')
+      .where('LOWER(u.email) = LOWER(:email)', { email })
+      .getOne();
+    if (!user) {
+      user = await createEntity(User, {
+        name: (req.body.name && String(req.body.name).trim()) || email,
+        email,
+        avatarUrl: '',
+        googleId: null,
+        role: 'member',
+      } as Partial<User>);
+    }
+  } else {
+    throw new BadUserInputError({ fields: { email: 'メールアドレスを入力してください。' } });
+  }
+
+  await addToRelation('users', spaceId, user.id);
   res.respond({ user });
 });
 
