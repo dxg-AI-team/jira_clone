@@ -59,10 +59,12 @@ module.exports = {
       favicon: path.join(__dirname, 'src/favicon.png'),
     }),
     new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: JSON.stringify('production'),
-        API_URL: JSON.stringify('https://jira-api.ivorreic.com'),
-      },
+      // Inlined at build time. Set API_URL / GOOGLE_CLIENT_ID in the build
+      // environment (e.g. Railway build variables) to point the bundle at the
+      // deployed API and enable Google Sign-In.
+      'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.env.API_URL': JSON.stringify(process.env.API_URL || ''),
+      'process.env.GOOGLE_CLIENT_ID': JSON.stringify(process.env.GOOGLE_CLIENT_ID || ''),
     }),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
   ],

@@ -1,0 +1,29 @@
+# Production image for the React client: build the static bundle, then serve it
+# with the small Express server in server.js (gzip + SPA history fallback).
+# Node 14 matches webpack 4 / this project's 2019-era toolchain.
+FROM node:14
+
+WORKDIR /app
+
+# Cypress is only used for e2e tests; skip its (large) binary download.
+ENV CYPRESS_INSTALL_BINARY=0
+
+COPY package*.json ./
+# Install all deps (incl. dev) — webpack & friends are devDependencies.
+RUN npm install --production=false
+
+COPY . .
+
+# Build-time configuration. webpack.config.production.js inlines these into the
+# bundle via DefinePlugin, so they must be present at `npm run build` time.
+# On Railway set these as the client service's (build) variables.
+ARG API_URL
+ARG GOOGLE_CLIENT_ID
+ENV API_URL=$API_URL
+ENV GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+
+RUN npm run build
+
+# server.js serves ./build and listens on process.env.PORT (Railway injects PORT).
+EXPOSE 8081
+CMD ["node", "server.js"]

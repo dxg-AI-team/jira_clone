@@ -1,0 +1,19 @@
+# Production image for the API. Same Node 14 base as local (ts-node 8 /
+# TypeORM 0.2 toolchain), but runs ts-node directly instead of nodemon.
+FROM node:14
+
+WORKDIR /app
+
+# ts-node / typescript are devDependencies, so install dev deps too.
+COPY package*.json ./
+RUN npm install --production=false
+
+COPY . .
+
+# Skip type-checking at runtime (decorator metadata is still emitted, so
+# TypeORM works); the @types versions drift and would otherwise block startup.
+ENV TS_NODE_TRANSPILE_ONLY=true
+
+# Listens on process.env.PORT (Railway injects PORT) or 3000.
+EXPOSE 3000
+CMD ["npm", "run", "start:prod"]
