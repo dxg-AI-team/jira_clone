@@ -3,6 +3,7 @@ import { getConnection } from 'typeorm';
 import { Space, User } from 'entities';
 import { catchErrors, AuthorizationError, BadUserInputError } from 'errors';
 import { createEntity, updateEntity, findEntityOrThrow } from 'utils/typeorm';
+import { sendInviteEmail } from 'utils/mail';
 
 const requireAdmin = (req: any): void => {
   if (req.currentUser.role !== 'admin') {
@@ -120,7 +121,7 @@ export const remove = catchErrors(async (req, res) => {
 // can sign in later under the allowlist model.
 export const addMember = catchErrors(async (req, res) => {
   const spaceId = Number(req.params.spaceId);
-  await requireSpaceAdmin(req, spaceId);
+  const space = await requireSpaceAdmin(req, spaceId);
 
   let user: User | undefined;
 
@@ -145,7 +146,11 @@ export const addMember = catchErrors(async (req, res) => {
   }
 
   await addToRelation('users', spaceId, user.id);
-  res.respond({ user });
+
+  // Best-effort invitation email (no-op if SMTP isn't configured).
+  const emailSent = await sendInviteEmail(user.email, space.name, req.currentUser.name);
+
+  res.respond({ user, emailSent });
 });
 
 export const removeMember = catchErrors(async (req, res) => {

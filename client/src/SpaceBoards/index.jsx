@@ -380,8 +380,15 @@ const MemberForm = ({ spaceId, onSuccess }) => (
     validations={{ email: [Form.is.required(), Form.is.email()] }}
     onSubmit={async (values, form) => {
       try {
-        await api.post(`/spaces/${spaceId}/members`, { email: values.email, name: values.name });
-        toast.success('メンバーを追加しました。');
+        const res = await api.post(`/spaces/${spaceId}/members`, {
+          email: values.email,
+          name: values.name,
+        });
+        toast.success(
+          res.emailSent
+            ? 'メンバーを追加し、招待メールを送信しました。'
+            : 'メンバーを追加しました。',
+        );
         onSuccess();
       } catch (error) {
         Form.handleAPIError(error, form);
