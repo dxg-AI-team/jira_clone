@@ -1,0 +1,24 @@
+# Root-context production Dockerfile for the client (used by `railway up`, whose
+# build context is the repo root). Mirrors client/Dockerfile.production but
+# copies from the client/ subdirectory.
+FROM node:14
+
+WORKDIR /app
+
+ENV CYPRESS_INSTALL_BINARY=0
+
+COPY client/package*.json ./
+RUN npm install --production=false
+
+COPY client/ .
+
+# Build-time config inlined into the bundle by webpack DefinePlugin.
+ARG API_URL
+ARG GOOGLE_CLIENT_ID
+ENV API_URL=$API_URL
+ENV GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+
+RUN npm run build
+
+EXPOSE 8081
+CMD ["node", "server.js"]

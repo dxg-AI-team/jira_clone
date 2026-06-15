@@ -11,6 +11,40 @@
 
 ---
 
+## ✅ 実デプロイ結果（CLI, 2026-06-15）
+
+Railway CLI で **dxg-ai-admin** ワークスペースの `jira-clone` プロジェクトに 3 サービスをデプロイ済み。
+
+| サービス | 状態 | URL / ホスト |
+| --- | --- | --- |
+| Postgres (postgres:11) | Online | `postgres.railway.internal`（内部） |
+| API | Online | https://api-production-1ed9.up.railway.app |
+| Client | Online | https://client-production-3b60.up.railway.app |
+
+**🔴 残作業（ユーザー対応・ログインに必須）**: Google Cloud Console の OAuth クライアントの
+「承認済み JavaScript 生成元」に **`https://client-production-3b60.up.railway.app`** を追加する。
+追加するまで Google ログインは `origin_mismatch` で失敗します。
+
+### CLI デプロイで実際に使った方法（重要）
+`railway up` のビルドコンテキストは **git リポジトリのルート**になるため、各サービスは
+**ルート直下の `Dockerfile.api` / `Dockerfile.client`** を使い、サービス変数
+`RAILWAY_DOCKERFILE_PATH` で指定しています（`api/` `client/` 配下の `Dockerfile.production` は
+GitHub 連携で Root Directory を設定する場合用）。
+
+```bash
+# 再デプロイ（コード変更を反映）
+railway up --service api --ci       # ルートの Dockerfile.api を使用
+railway up --service client --ci    # ルートの Dockerfile.client を使用（API_URL はビルド時に焼き込み）
+# 変数の確認/変更
+railway variables --service api
+railway variables --set "KEY=VALUE" --service <svc>
+```
+
+> クライアントの `API_URL` / `GOOGLE_CLIENT_ID` を変えたら、バンドルに焼き込むため
+> `railway up --service client --ci` で**再ビルド**が必要です。
+
+---
+
 ## ⚠️ 重要な前提（先に読んでください）
 
 1. **Postgres は必ず v11。** TypeORM 0.2 は PostgreSQL 12 以降で `column "consrc" does not exist` エラーになります。Railway のマネージド Postgres は最新版なので使えません。**`postgres:11` の Docker イメージをサービスとして立てます。**

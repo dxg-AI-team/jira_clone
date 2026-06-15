@@ -1,0 +1,15 @@
+# Root-context production Dockerfile for the API (used by `railway up`, whose
+# build context is the repo root). Mirrors api/Dockerfile.production but copies
+# from the api/ subdirectory.
+FROM node:14
+
+WORKDIR /app
+
+COPY api/package*.json ./
+RUN npm install --production=false
+
+COPY api/ .
+
+ENV TS_NODE_TRANSPILE_ONLY=true
+EXPOSE 3000
+CMD ["npm", "run", "start:prod"]
