@@ -145,7 +145,16 @@ export const addMember = catchErrors(async (req, res) => {
     throw new BadUserInputError({ fields: { email: 'メールアドレスを入力してください。' } });
   }
 
-  await addToRelation('users', spaceId, user.id);
+  // Add to the space only if not already a member (re-inviting an existing
+  // member shouldn't error — it just re-sends the invitation email).
+  const alreadyMember = await Space.createQueryBuilder('s')
+    .leftJoin('s.users', 'u')
+    .where('s.id = :spaceId', { spaceId })
+    .andWhere('u.id = :userId', { userId: user.id })
+    .getCount();
+  if (!alreadyMember) {
+    await addToRelation('users', spaceId, user.id);
+  }
 
   // Best-effort invitation email (no-op if SMTP isn't configured).
   const emailSent = await sendInviteEmail(user.email, space.name, req.currentUser.name);
