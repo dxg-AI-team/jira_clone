@@ -3,11 +3,11 @@ import PropTypes from 'prop-types';
 
 import {
   IssueType,
-  IssueStatus,
   IssuePriority,
   IssueTypeCopy,
   IssuePriorityCopy,
 } from 'shared/constants/issues';
+import { getBacklogKey } from 'shared/utils/workflow';
 import toast from 'shared/utils/toast';
 import useApi from 'shared/hooks/api';
 import useCurrentUser from 'shared/hooks/currentUser';
@@ -60,7 +60,7 @@ const ProjectIssueCreate = ({ project, fetchProject, onCreate, modalClose }) => 
         try {
           await createIssue({
             ...values,
-            status: IssueStatus.BACKLOG,
+            status: getBacklogKey(project),
             projectId: project.id,
             users: values.userIds.map(id => ({ id })),
             components: values.componentIds.map(id => ({ id })),

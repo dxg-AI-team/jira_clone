@@ -1,9 +1,9 @@
 import { getConnection } from 'typeorm';
 
-import { Sprint } from 'entities';
-import { IssueStatus } from 'constants/issues';
+import { Sprint, Project } from 'entities';
 import { catchErrors } from 'errors';
 import { createEntity, updateEntity, deleteEntity, findEntityOrThrow } from 'utils/typeorm';
+import { getDoneKey } from 'utils/workflow';
 
 export const getProjectSprints = catchErrors(async (req, res) => {
   const sprints = await Sprint.find({
@@ -57,10 +57,12 @@ export const start = catchErrors(async (req, res) => {
 
 export const complete = catchErrors(async (req, res) => {
   const sprintId = Number(req.params.sprintId);
-  // Incomplete issues return to the backlog.
+  // Incomplete issues (not in the board's last/"done" column) return to backlog.
+  const project = await findEntityOrThrow(Project, req.projectId);
+  const doneKey = getDoneKey(project);
   await getConnection().query(
     'UPDATE issue SET "sprintId" = NULL WHERE "sprintId" = $1 AND status != $2',
-    [sprintId, IssueStatus.DONE],
+    [sprintId, doneKey],
   );
   const sprint = await updateEntity(Sprint, sprintId, { status: 'completed' });
   res.respond({ sprint });

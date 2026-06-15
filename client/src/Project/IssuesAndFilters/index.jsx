@@ -8,12 +8,11 @@ import useApi from 'shared/hooks/api';
 import toast from 'shared/utils/toast';
 import {
   IssueType,
-  IssueStatus,
   IssuePriority,
   IssueTypeCopy,
-  IssueStatusCopy,
   IssuePriorityCopy,
 } from 'shared/constants/issues';
+import { getColumns, getColumnName, columnColorForKey } from 'shared/utils/workflow';
 import useMergeState from 'shared/hooks/mergeState';
 import {
   InputDebounced,
@@ -62,13 +61,6 @@ const defaultFilters = {
   versionId: null,
   componentIds: [],
   sort: 'created-desc',
-};
-
-const statusBadgeColors = {
-  [IssueStatus.BACKLOG]: { bg: '#dfe1e6', textColor: '#42526e' },
-  [IssueStatus.SELECTED]: { bg: '#dfe1e6', textColor: '#42526e' },
-  [IssueStatus.INPROGRESS]: { bg: '#0052cc', textColor: '#fff' },
-  [IssueStatus.DONE]: { bg: '#0b875b', textColor: '#fff' },
 };
 
 const sortOptions = [
@@ -175,7 +167,7 @@ const ProjectIssuesAndFilters = ({ project }) => {
             isMulti
             placeholder="ステータス"
             value={filters.statuses}
-            options={toOptions(Object.values(IssueStatus), IssueStatusCopy)}
+            options={getColumns(project).map(c => ({ value: c.key, label: c.name }))}
             onChange={statuses => mergeFilters({ statuses })}
           />
         </FilterItem>
@@ -267,7 +259,6 @@ const ProjectIssuesAndFilters = ({ project }) => {
             <ColAssignees>担当</ColAssignees>
           </HeaderRow>
           {issues.map(issue => {
-            const badge = statusBadgeColors[issue.status];
             const parent = issue.parentId
               ? (project.issues || []).find(i => i.id === issue.parentId)
               : null;
@@ -286,8 +277,8 @@ const ProjectIssuesAndFilters = ({ project }) => {
                   {childCount > 0 && <RowSubMeta>サブタスク {childCount} 件</RowSubMeta>}
                 </ColTitle>
                 <ColStatus>
-                  <StatusBadge bg={badge.bg} textColor={badge.textColor}>
-                    {IssueStatusCopy[issue.status]}
+                  <StatusBadge bg={columnColorForKey(project, issue.status)} textColor="#fff">
+                    {getColumnName(project, issue.status)}
                   </StatusBadge>
                 </ColStatus>
                 <ColPriority>

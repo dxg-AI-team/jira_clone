@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import api from 'shared/utils/api';
 import toast from 'shared/utils/toast';
 import { formatDate } from 'shared/utils/dateTime';
-import { IssueStatus } from 'shared/constants/issues';
+import { getDoneKey } from 'shared/utils/workflow';
 import { Button, ConfirmModal, Modal, Form } from 'shared/components';
 
 import {
@@ -46,11 +46,12 @@ const ProjectReleases = ({ project, fetchProject }) => {
 
   const versions = project.versions || [];
   const issues = project.issues || [];
+  const doneKey = getDoneKey(project);
 
   const versionProgress = versionId => {
     const versionIssues = issues.filter(issue => issue.versionId === versionId);
     const total = versionIssues.length;
-    const done = versionIssues.filter(issue => issue.status === IssueStatus.DONE).length;
+    const done = versionIssues.filter(issue => issue.status === doneKey).length;
     const percent = total === 0 ? 0 : Math.round((done / total) * 100);
     return { total, done, percent };
   };

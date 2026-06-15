@@ -1,11 +1,11 @@
 import styled, { css } from 'styled-components';
 
-import { issueStatusColors, issueStatusBackgroundColors, mixin } from 'shared/utils/styles';
+import { mixin } from 'shared/utils/styles';
 
 export const Status = styled.div`
   text-transform: uppercase;
   transition: all 0.1s;
-  ${props => mixin.tag(issueStatusBackgroundColors[props.color], issueStatusColors[props.color])}
+  ${props => mixin.tag(props.bg, '#fff')}
   ${props =>
     props.isValue &&
     css`

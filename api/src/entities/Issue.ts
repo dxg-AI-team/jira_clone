@@ -24,7 +24,8 @@ class Issue extends BaseEntity {
   static validations = {
     title: [is.required(), is.maxLength(200)],
     type: [is.required(), is.oneOf(Object.values(IssueType))],
-    status: [is.required(), is.oneOf(Object.values(IssueStatus))],
+    // status is a board column key (configurable per board), so only require it.
+    status: [is.required()],
     priority: [is.required(), is.oneOf(Object.values(IssuePriority))],
     listPosition: is.required(),
     reporterId: is.required(),

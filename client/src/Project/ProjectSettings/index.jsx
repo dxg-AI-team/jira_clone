@@ -3,12 +3,11 @@ import PropTypes from 'prop-types';
 import { useFormikContext } from 'formik';
 
 import { ProjectCategory, ProjectCategoryCopy } from 'shared/constants/projects';
-import { IssueStatus, IssueStatusCopy } from 'shared/constants/issues';
-import { parseWorkflow } from 'shared/utils/workflow';
+import { getColumns } from 'shared/utils/workflow';
 import api from 'shared/utils/api';
 import toast from 'shared/utils/toast';
 import useApi from 'shared/hooks/api';
-import { Form, Breadcrumbs } from 'shared/components';
+import { Form, Breadcrumbs, Button, Icon } from 'shared/components';
 
 import {
   FormCont,
@@ -22,10 +21,18 @@ import {
   WorkflowInner,
   WorkflowHint,
   WorkflowRow,
-  WorkflowStatus,
+  WorkflowPosition,
   WorkflowInput,
   WipInput,
+  RowActions,
+  AddColumnButton,
 } from './Styles';
+
+let columnSeq = 0;
+const newColumnKey = () => {
+  columnSeq += 1;
+  return `col-${Date.now().toString(36)}-${columnSeq}`;
+};
 
 const iconOptions = ['📋', '🚀', '🐞', '💼', '🎨', '⚙️', '📊', '🔧', '🌟', '📁', '💡', '🧩'];
 
@@ -55,31 +62,49 @@ const workflowPropTypes = {
 };
 
 const WorkflowSettings = ({ project, fetchProject }) => {
-  const existing = parseWorkflow(project);
   const [rows, setRows] = useState(
-    Object.values(IssueStatus).map(status => ({
-      status,
-      name: (existing[status] && existing[status].name) || '',
-      wipLimit:
-        existing[status] && existing[status].wipLimit ? String(existing[status].wipLimit) : '',
+    getColumns(project).map(c => ({
+      key: c.key,
+      name: c.name,
+      wipLimit: c.wipLimit ? String(c.wipLimit) : '',
     })),
   );
   const [isWorking, setWorking] = useState(false);
 
-  const updateRow = (status, field, value) =>
-    setRows(prev => prev.map(row => (row.status === status ? { ...row, [field]: value } : row)));
+  const updateRow = (key, field, value) =>
+    setRows(prev => prev.map(row => (row.key === key ? { ...row, [field]: value } : row)));
+
+  const move = (index, delta) =>
+    setRows(prev => {
+      const next = [...prev];
+      const target = index + delta;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+
+  const removeRow = key => setRows(prev => prev.filter(row => row.key !== key));
+
+  const addRow = () => setRows(prev => [...prev, { key: newColumnKey(), name: '', wipLimit: '' }]);
 
   const save = async () => {
+    const cleaned = rows.map(row => ({ ...row, name: row.name.trim() }));
+    if (cleaned.length < 2) {
+      toast.error('列は最低2つ必要です。');
+      return;
+    }
+    if (cleaned.some(row => !row.name)) {
+      toast.error('すべての列に名前を入力してください。');
+      return;
+    }
     setWorking(true);
     try {
-      const config = rows
-        .map(row => ({
-          status: row.status,
-          name: row.name.trim() || undefined,
-          wipLimit: row.wipLimit ? Number(row.wipLimit) : undefined,
-        }))
-        .filter(row => row.name || row.wipLimit);
-      await api.put('/project', { workflow: config.length ? JSON.stringify(config) : null });
+      const config = cleaned.map(row => ({
+        key: row.key,
+        name: row.name,
+        wipLimit: row.wipLimit ? Number(row.wipLimit) : undefined,
+      }));
+      await api.put('/project', { workflow: JSON.stringify(config) });
       await fetchProject();
       toast.success('ワークフローを保存しました。');
     } catch (error) {
@@ -91,28 +116,54 @@ const WorkflowSettings = ({ project, fetchProject }) => {
   return (
     <WorkflowCont>
       <WorkflowInner>
-        <FormHeading>ワークフロー</FormHeading>
+        <FormHeading>ワークフロー（カンバンの列）</FormHeading>
         <WorkflowHint>
-          カンバンボードの各列の表示名と
-          WIP（仕掛り）上限をカスタマイズできます。空欄なら既定の名称・上限なしになります。
+          カンバンボードの列を追加・削除・並べ替え・改名できます（2列以上）。
+          <b>先頭が「未着手」、末尾が「完了」</b>
+          として扱われ、スプリント完了やレポートの集計に使われます。WIP（仕掛り）上限は任意です。
+          列を削除すると、その列にあった課題は先頭の列に移動します。
         </WorkflowHint>
-        {rows.map(row => (
-          <WorkflowRow key={row.status}>
-            <WorkflowStatus>{IssueStatusCopy[row.status]}</WorkflowStatus>
+        {rows.map((row, index) => (
+          <WorkflowRow key={row.key}>
+            <WorkflowPosition>{index + 1}</WorkflowPosition>
             <WorkflowInput
-              placeholder={IssueStatusCopy[row.status]}
+              placeholder="列名"
               value={row.name}
-              onChange={event => updateRow(row.status, 'name', event.target.value)}
+              onChange={event => updateRow(row.key, 'name', event.target.value)}
             />
             <WipInput
               type="number"
               min="0"
               placeholder="WIP上限"
               value={row.wipLimit}
-              onChange={event => updateRow(row.status, 'wipLimit', event.target.value)}
+              onChange={event => updateRow(row.key, 'wipLimit', event.target.value)}
             />
+            <RowActions>
+              <Button
+                variant="empty"
+                icon="arrow-up"
+                onClick={() => move(index, -1)}
+                disabled={index === 0}
+              />
+              <Button
+                variant="empty"
+                icon="arrow-down"
+                onClick={() => move(index, 1)}
+                disabled={index === rows.length - 1}
+              />
+              <Button
+                variant="empty"
+                icon="trash"
+                onClick={() => removeRow(row.key)}
+                disabled={rows.length <= 2}
+              />
+            </RowActions>
           </WorkflowRow>
         ))}
+        <AddColumnButton onClick={addRow}>
+          <Icon type="plus" size={18} />
+          列を追加
+        </AddColumnButton>
         <ActionButton variant="primary" isWorking={isWorking} onClick={save}>
           ワークフローを保存
         </ActionButton>

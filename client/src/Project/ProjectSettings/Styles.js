@@ -79,15 +79,17 @@ export const WorkflowRow = styled.div`
   margin-bottom: 12px;
 `;
 
-export const WorkflowStatus = styled.div`
-  width: 120px;
+export const WorkflowPosition = styled.div`
+  width: 22px;
   flex-shrink: 0;
+  text-align: center;
   ${font.medium}
-  ${font.size(14)}
-  color: ${color.textDark};
+  ${font.size(13)}
+  color: ${color.textLight};
 `;
 
 export const WorkflowInput = styled.input`
+  flex: 1;
   height: 34px;
   padding: 0 9px;
   border: 1px solid ${color.borderLight};
@@ -100,5 +102,28 @@ export const WorkflowInput = styled.input`
 `;
 
 export const WipInput = styled(WorkflowInput)`
+  flex: none;
   width: 90px;
+`;
+
+export const RowActions = styled.div`
+  display: flex;
+  flex-shrink: 0;
+`;
+
+export const AddColumnButton = styled.div`
+  display: inline-flex;
+  align-items: center;
+  margin-top: 4px;
+  padding: 6px 4px;
+  cursor: pointer;
+  ${font.medium}
+  ${font.size(14)}
+  color: ${color.textLink};
+  i {
+    margin-right: 4px;
+  }
+  &:hover {
+    text-decoration: underline;
+  }
 `;

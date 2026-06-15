@@ -4,12 +4,17 @@ import moment from 'moment';
 
 import {
   IssueType,
-  IssueStatus,
   IssuePriority,
   IssueTypeCopy,
-  IssueStatusCopy,
   IssuePriorityCopy,
 } from 'shared/constants/issues';
+import {
+  getColumns,
+  getDoneKey,
+  getColumnName,
+  columnColor,
+  columnColorForKey,
+} from 'shared/utils/workflow';
 import { color } from 'shared/utils/styles';
 import { formatDateTimeConversational } from 'shared/utils/dateTime';
 import { Breadcrumbs, Icon } from 'shared/components';
@@ -50,13 +55,6 @@ import {
   StatusTag,
 } from './Styles';
 
-const statusColors = {
-  [IssueStatus.BACKLOG]: '#8993a4',
-  [IssueStatus.SELECTED]: '#6554c0',
-  [IssueStatus.INPROGRESS]: color.primary,
-  [IssueStatus.DONE]: color.success,
-};
-
 const within7Days = date => moment(date).isAfter(moment().subtract(7, 'days'));
 
 const propTypes = {
@@ -86,18 +84,16 @@ const ProjectSummary = ({ project }) => {
   const issues = project.issues || [];
   const users = project.users || [];
   const versions = project.versions || [];
+  const columns = getColumns(project);
+  const doneKey = getDoneKey(project);
 
   const total = issues.length;
-  const completedLast7 = issues.filter(
-    i => i.status === IssueStatus.DONE && within7Days(i.updatedAt),
-  ).length;
+  const completedLast7 = issues.filter(i => i.status === doneKey && within7Days(i.updatedAt))
+    .length;
   const updatedLast7 = issues.filter(i => within7Days(i.updatedAt)).length;
   const createdLast7 = issues.filter(i => within7Days(i.createdAt)).length;
   const dueSoon = issues.filter(
-    i =>
-      i.dueDate &&
-      i.status !== IssueStatus.DONE &&
-      moment(i.dueDate).isBefore(moment().add(7, 'days')),
+    i => i.dueDate && i.status !== doneKey && moment(i.dueDate).isBefore(moment().add(7, 'days')),
   ).length;
 
   const stats = [
@@ -107,10 +103,10 @@ const ProjectSummary = ({ project }) => {
     { value: dueSoon, label: '期限 7 日以内', icon: 'calendar', bg: '#d04437' },
   ];
 
-  const statusData = Object.values(IssueStatus).map(status => ({
-    label: IssueStatusCopy[status],
-    count: issues.filter(i => i.status === status).length,
-    color: statusColors[status],
+  const statusData = columns.map((column, idx) => ({
+    label: column.name,
+    count: issues.filter(i => i.status === column.key).length,
+    color: columnColor(idx, columns.length),
   }));
 
   const priorityRows = Object.values(IssuePriority)
@@ -143,7 +139,7 @@ const ProjectSummary = ({ project }) => {
 
   const versionRows = versions.map(version => {
     const vIssues = issues.filter(i => i.versionId === version.id);
-    const done = vIssues.filter(i => i.status === IssueStatus.DONE).length;
+    const done = vIssues.filter(i => i.status === doneKey).length;
     return {
       label: version.name,
       count: vIssues.length,
@@ -225,10 +221,10 @@ const ProjectSummary = ({ project }) => {
                   <ActivityMeta>{formatDateTimeConversational(issue.updatedAt)}</ActivityMeta>
                 </ActivityMain>
                 <StatusTag
-                  bg={`${statusColors[issue.status]}22`}
-                  textColor={statusColors[issue.status]}
+                  bg={`${columnColorForKey(project, issue.status)}22`}
+                  textColor={columnColorForKey(project, issue.status)}
                 >
-                  {IssueStatusCopy[issue.status]}
+                  {getColumnName(project, issue.status)}
                 </StatusTag>
               </ActivityItem>
             ))

@@ -5,7 +5,7 @@ import { DragDropContext } from 'react-beautiful-dnd';
 import useCurrentUser from 'shared/hooks/currentUser';
 import api from 'shared/utils/api';
 import { moveItemWithinArray, insertItemIntoArray } from 'shared/utils/javascript';
-import { IssueStatus } from 'shared/constants/issues';
+import { getColumns } from 'shared/utils/workflow';
 
 import List from './List';
 import { Lists } from './Styles';
@@ -37,10 +37,10 @@ const ProjectBoardLists = ({ project, filters, updateLocalProjectIssues }) => {
   return (
     <DragDropContext onDragEnd={handleIssueDrop}>
       <Lists>
-        {Object.values(IssueStatus).map(status => (
+        {getColumns(project).map(column => (
           <List
-            key={status}
-            status={status}
+            key={column.key}
+            column={column}
             project={project}
             filters={filters}
             currentUserId={currentUserId}

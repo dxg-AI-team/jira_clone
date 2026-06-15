@@ -3,13 +3,8 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
 
-import {
-  IssueType,
-  IssueStatus,
-  IssueTypeCopy,
-  IssueStatusCopy,
-  IssuePriorityCopy,
-} from 'shared/constants/issues';
+import { IssueType, IssueTypeCopy, IssuePriorityCopy } from 'shared/constants/issues';
+import { getColumns, getDoneKey, columnColor } from 'shared/utils/workflow';
 import { color } from 'shared/utils/styles';
 import { getCurrentProjectId } from 'shared/utils/currentProject';
 import { IssueTypeIcon, IssuePriorityIcon } from 'shared/components';
@@ -54,13 +49,6 @@ import {
   PageButton,
   PageInfo,
 } from './Styles';
-
-const statusColors = {
-  [IssueStatus.BACKLOG]: '#8993a4',
-  [IssueStatus.SELECTED]: '#5e6c84',
-  [IssueStatus.INPROGRESS]: color.primary,
-  [IssueStatus.DONE]: color.success,
-};
 
 const typeColors = {
   [IssueType.TASK]: '#4fade6',
@@ -389,7 +377,7 @@ const pickBurndownSprint = sprints => {
   return dated.slice().sort((a, b) => b.id - a.id)[0] || null;
 };
 
-const Burndown = ({ sprint, issues }) => {
+const Burndown = ({ sprint, issues, doneKey }) => {
   const start = moment(sprint.startDate).startOf('day');
   const end = moment(sprint.endDate).endOf('day');
   const sprintIssues = issues.filter(i => i.sprintId === sprint.id);
@@ -414,7 +402,7 @@ const Burndown = ({ sprint, issues }) => {
 
   const completedWorkBy = dayEnd =>
     sprintIssues
-      .filter(i => i.status === IssueStatus.DONE && moment(i.updatedAt).isSameOrBefore(dayEnd))
+      .filter(i => i.status === doneKey && moment(i.updatedAt).isSameOrBefore(dayEnd))
       .reduce((sum, i) => sum + workOf(i), 0);
 
   const W = 660;
@@ -502,6 +490,7 @@ const Burndown = ({ sprint, issues }) => {
 Burndown.propTypes = {
   sprint: PropTypes.object.isRequired,
   issues: PropTypes.array.isRequired,
+  doneKey: PropTypes.string.isRequired,
 };
 
 /* ---------- Main ---------- */
@@ -513,6 +502,12 @@ const ProjectReports = ({ project }) => {
   const issues = project.issues || [];
   const users = project.users || [];
   const now = moment();
+  const columns = getColumns(project);
+  const doneKey = getDoneKey(project);
+  const statusColor = key => {
+    const idx = columns.findIndex(c => c.key === key);
+    return columnColor(idx === -1 ? 0 : idx, columns.length);
+  };
 
   // Stat cards
   const total = issues.length;
@@ -520,17 +515,15 @@ const ProjectReports = ({ project }) => {
     moment(i.createdAt).isAfter(moment(now).subtract(30, 'days')),
   ).length;
   const done30 = issues.filter(
-    i =>
-      i.status === IssueStatus.DONE &&
-      moment(i.updatedAt).isAfter(moment(now).subtract(30, 'days')),
+    i => i.status === doneKey && moment(i.updatedAt).isAfter(moment(now).subtract(30, 'days')),
   ).length;
-  const incomplete = issues.filter(i => i.status !== IssueStatus.DONE).length;
+  const incomplete = issues.filter(i => i.status !== doneKey).length;
 
   // Donuts
-  const statusSegments = Object.values(IssueStatus).map(status => ({
-    label: IssueStatusCopy[status],
-    value: issues.filter(i => i.status === status).length,
-    color: statusColors[status],
+  const statusSegments = columns.map(column => ({
+    label: column.name,
+    value: issues.filter(i => i.status === column.key).length,
+    color: statusColor(column.key),
   }));
   const typeSegments = Object.values(IssueType).map(type => ({
     label: IssueTypeCopy[type],
@@ -554,16 +547,16 @@ const ProjectReports = ({ project }) => {
   const createdMonths = monthRange(issues.map(i => i.createdAt));
   const creationData = createdMonths.map(key => {
     const monthIssues = issues.filter(i => moment(i.createdAt).format('YYYY-MM') === key);
-    const segments = Object.values(IssueStatus).map(status => ({
-      label: IssueStatusCopy[status],
-      color: statusColors[status],
-      value: monthIssues.filter(i => i.status === status).length,
+    const segments = columns.map(column => ({
+      label: column.name,
+      color: statusColor(column.key),
+      value: monthIssues.filter(i => i.status === column.key).length,
     }));
     return { key, total: monthIssues.length, segments };
   });
 
   // Completion trend (stacked by type, by updatedAt month of done issues)
-  const doneIssues = issues.filter(i => i.status === IssueStatus.DONE);
+  const doneIssues = issues.filter(i => i.status === doneKey);
   const doneMonths = monthRange(doneIssues.map(i => i.updatedAt));
   const completionData = doneMonths.map(key => {
     const monthIssues = doneIssues.filter(i => moment(i.updatedAt).format('YYYY-MM') === key);
@@ -631,15 +624,15 @@ const ProjectReports = ({ project }) => {
         <Donut title="担当者別の作業項目数" segments={assigneeSegments} />
       </DonutGrid>
 
-      {burndownSprint && <Burndown sprint={burndownSprint} issues={issues} />}
+      {burndownSprint && <Burndown sprint={burndownSprint} issues={issues} doneKey={doneKey} />}
 
       <Grid>
         <StackedBar
           title="作業項目作成数の推移"
           months={creationData}
-          legend={Object.values(IssueStatus).map(s => ({
-            label: IssueStatusCopy[s],
-            color: statusColors[s],
+          legend={columns.map(column => ({
+            label: column.name,
+            color: statusColor(column.key),
           }))}
         />
         <StackedBar

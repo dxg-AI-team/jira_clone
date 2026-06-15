@@ -6,7 +6,8 @@ import api from 'shared/utils/api';
 import toast from 'shared/utils/toast';
 import useCurrentUser from 'shared/hooks/currentUser';
 import { getCurrentProjectId } from 'shared/utils/currentProject';
-import { IssueType, IssueStatus, IssuePriority, IssueStatusCopy } from 'shared/constants/issues';
+import { IssueType, IssuePriority } from 'shared/constants/issues';
+import { getDoneKey, getColumnName, columnColorForKey, getBacklogKey } from 'shared/utils/workflow';
 import { Button, IssueTypeIcon } from 'shared/components';
 
 import { SectionTitle } from '../Styles';
@@ -25,16 +26,10 @@ import {
   AddInput,
 } from './Styles';
 
-const statusColors = {
-  [IssueStatus.BACKLOG]: '#8993a4',
-  [IssueStatus.SELECTED]: '#5e6c84',
-  [IssueStatus.INPROGRESS]: '#0052cc',
-  [IssueStatus.DONE]: '#0B875B',
-};
-
 const propTypes = {
   issue: PropTypes.object.isRequired,
   fetchIssue: PropTypes.func.isRequired,
+  project: PropTypes.object.isRequired,
   mode: PropTypes.oneOf(['parent', 'children']),
 };
 
@@ -42,14 +37,15 @@ const defaultProps = {
   mode: 'children',
 };
 
-const SubTasks = ({ issue, fetchIssue, mode }) => {
+const SubTasks = ({ issue, fetchIssue, project, mode }) => {
   const history = useHistory();
   const { currentUser } = useCurrentUser();
   const [title, setTitle] = useState('');
   const [isAdding, setAdding] = useState(false);
 
+  const doneKey = getDoneKey(project);
   const children = issue.children || [];
-  const done = children.filter(c => c.status === IssueStatus.DONE).length;
+  const done = children.filter(c => c.status === doneKey).length;
   const percent = children.length === 0 ? 0 : Math.round((done / children.length) * 100);
 
   const goTo = id => history.push(`/project/${getCurrentProjectId()}/board/issues/${id}`);
@@ -61,7 +57,7 @@ const SubTasks = ({ issue, fetchIssue, mode }) => {
       await api.post('/issues', {
         title: title.trim(),
         type: IssueType.SUBTASK,
-        status: IssueStatus.BACKLOG,
+        status: getBacklogKey(project),
         priority: IssuePriority.MEDIUM,
         reporterId: currentUser.id,
         parentId: issue.id,
@@ -106,10 +102,12 @@ const SubTasks = ({ issue, fetchIssue, mode }) => {
         {children.map(child => (
           <Row key={child.id}>
             <IssueTypeIcon type={child.type} />
-            <RowTitle done={child.status === IssueStatus.DONE} onClick={() => goTo(child.id)}>
+            <RowTitle done={child.status === doneKey} onClick={() => goTo(child.id)}>
               {child.title}
             </RowTitle>
-            <StatusTag bg={statusColors[child.status]}>{IssueStatusCopy[child.status]}</StatusTag>
+            <StatusTag bg={columnColorForKey(project, child.status)}>
+              {getColumnName(project, child.status)}
+            </StatusTag>
           </Row>
         ))}
       </List>

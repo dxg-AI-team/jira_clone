@@ -7,7 +7,7 @@ import api from 'shared/utils/api';
 import toast from 'shared/utils/toast';
 import { formatDate } from 'shared/utils/dateTime';
 import { moveItemWithinArray, insertItemIntoArray } from 'shared/utils/javascript';
-import { IssueStatus } from 'shared/constants/issues';
+import { getDoneKey } from 'shared/utils/workflow';
 import {
   Button,
   ConfirmModal,
@@ -71,6 +71,7 @@ const Backlog = ({ project, fetchProject }) => {
 
   const issues = project.issues || [];
   const sprints = project.sprints || [];
+  const doneKey = getDoneKey(project);
 
   const openSprints = sprints.filter(s => s.status !== 'completed');
   const completedSprints = sprints.filter(s => s.status === 'completed');
@@ -139,7 +140,7 @@ const Backlog = ({ project, fetchProject }) => {
   };
 
   const renderIssueRow = (issue, index) => {
-    const completed = issue.status === IssueStatus.DONE;
+    const completed = issue.status === doneKey;
     return (
       <Draggable key={issue.id} draggableId={`${issue.id}`} index={index}>
         {provided => (

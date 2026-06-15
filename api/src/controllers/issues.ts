@@ -1,18 +1,11 @@
 import { pick } from 'lodash';
 
-import { Issue, IssueLink, Attachment, ActivityLog } from 'entities';
+import { Issue, IssueLink, Attachment, ActivityLog, Project } from 'entities';
 import { catchErrors } from 'errors';
 import { updateEntity, deleteEntity, createEntity, findEntityOrThrow } from 'utils/typeorm';
 import { notify } from 'utils/notifications';
 import { logActivity } from 'utils/activity';
-import { IssueStatus } from 'constants/issues';
-
-const STATUS_LABEL: { [key: string]: string } = {
-  [IssueStatus.BACKLOG]: 'バックログ',
-  [IssueStatus.SELECTED]: '選択済み',
-  [IssueStatus.INPROGRESS]: '進行中',
-  [IssueStatus.DONE]: '完了',
-};
+import { getColumnName } from 'utils/workflow';
 
 export const getProjectIssues = catchErrors(async (req, res) => {
   const { projectId } = req;
@@ -138,7 +131,9 @@ export const update = catchErrors(async (req, res) => {
 
   // Status change → watchers and assignees.
   if (req.body.status && req.body.status !== oldStatus) {
-    const newLabel = STATUS_LABEL[issue.status] || issue.status;
+    const project = await findEntityOrThrow(Project, issue.projectId);
+    const newLabel = getColumnName(project, issue.status);
+    const oldLabel = getColumnName(project, oldStatus);
     const recipients = Array.from(new Set([...watcherIds, ...(issue.userIds || [])]));
     await notify(recipients, {
       type: 'status',
@@ -151,7 +146,7 @@ export const update = catchErrors(async (req, res) => {
       issue.id,
       actorId,
       'status',
-      `ステータスを「${STATUS_LABEL[oldStatus] || oldStatus}」から「${newLabel}」に変更しました`,
+      `ステータスを「${oldLabel}」から「${newLabel}」に変更しました`,
     );
   }
 

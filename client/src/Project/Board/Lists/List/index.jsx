@@ -4,14 +4,13 @@ import moment from 'moment';
 import { Droppable } from 'react-beautiful-dnd';
 import { intersection } from 'lodash';
 
-import { IssueStatusCopy } from 'shared/constants/issues';
-import { parseWorkflow } from 'shared/utils/workflow';
+import { getDoneKey } from 'shared/utils/workflow';
 
 import Issue from './Issue';
 import { List, Title, IssuesCount, WipLimit, Issues } from './Styles';
 
 const propTypes = {
-  status: PropTypes.string.isRequired,
+  column: PropTypes.object.isRequired,
   project: PropTypes.object.isRequired,
   filters: PropTypes.object.isRequired,
   currentUserId: PropTypes.number,
@@ -21,22 +20,22 @@ const defaultProps = {
   currentUserId: null,
 };
 
-const ProjectBoardList = ({ status, project, filters, currentUserId }) => {
+const ProjectBoardList = ({ column, project, filters, currentUserId }) => {
+  const status = column.key;
   const filteredIssues = filterIssues(project.issues, filters, currentUserId);
   const filteredListIssues = getSortedListIssues(filteredIssues, status);
   const allListIssues = getSortedListIssues(project.issues, status);
 
-  const config = parseWorkflow(project)[status] || {};
-  const columnName = config.name || IssueStatusCopy[status];
-  const wipLimit = Number(config.wipLimit) || null;
+  const wipLimit = Number(column.wipLimit) || null;
   const overLimit = wipLimit && allListIssues.length > wipLimit;
+  const doneKey = getDoneKey(project);
 
   return (
     <Droppable key={status} droppableId={status}>
       {provided => (
         <List>
           <Title>
-            {`${columnName} `}
+            {`${column.name} `}
             <IssuesCount>{formatIssuesCount(allListIssues, filteredListIssues)}</IssuesCount>
             {wipLimit && <WipLimit over={overLimit}>{` (上限 ${wipLimit})`}</WipLimit>}
           </Title>
@@ -52,6 +51,7 @@ const ProjectBoardList = ({ status, project, filters, currentUserId }) => {
                 issue={issue}
                 index={index}
                 allIssues={project.issues}
+                doneKey={doneKey}
               />
             ))}
             {provided.placeholder}

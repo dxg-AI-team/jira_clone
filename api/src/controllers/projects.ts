@@ -4,6 +4,7 @@ import { Project, Space } from 'entities';
 import { catchErrors, AuthorizationError } from 'errors';
 import { findEntityOrThrow, updateEntity, createEntity } from 'utils/typeorm';
 import { issuePartial } from 'serializers/issues';
+import { getColumnKeys } from 'utils/workflow';
 
 const requireSpaceMember = (req: any, spaceId: number): void => {
   if (!(req.currentUser.spaceIds || []).includes(Number(spaceId))) {
@@ -63,6 +64,17 @@ export const getProjectWithUsersAndIssues = catchErrors(async (req, res) => {
 
 export const update = catchErrors(async (req, res) => {
   const project = await updateEntity(Project, req.projectId, req.body);
+
+  // If the workflow (columns) changed, move any issue whose status is no longer
+  // a valid column into the first column so nothing disappears from the board.
+  if (req.body.workflow !== undefined) {
+    const keys = getColumnKeys(project);
+    await getConnection().query(
+      'UPDATE issue SET status = $1 WHERE "projectId" = $2 AND NOT (status = ANY($3))',
+      [keys[0], project.id, keys],
+    );
+  }
+
   res.respond({ project });
 });
 

@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { useRouteMatch } from 'react-router-dom';
 import { Draggable } from 'react-beautiful-dnd';
 
-import { IssueStatus } from 'shared/constants/issues';
 import { IssueTypeIcon, IssuePriorityIcon, Icon } from 'shared/components';
 
 import {
@@ -23,19 +22,21 @@ const propTypes = {
   issue: PropTypes.object.isRequired,
   index: PropTypes.number.isRequired,
   allIssues: PropTypes.array,
+  doneKey: PropTypes.string,
 };
 
 const defaultProps = {
   allIssues: [],
+  doneKey: 'done',
 };
 
-const ProjectBoardListIssue = ({ projectUsers, issue, index, allIssues }) => {
+const ProjectBoardListIssue = ({ projectUsers, issue, index, allIssues, doneKey }) => {
   const match = useRouteMatch();
 
   const assignees = issue.userIds.map(userId => projectUsers.find(user => user.id === userId));
 
   const children = allIssues.filter(i => i.parentId === issue.id);
-  const childrenDone = children.filter(i => i.status === IssueStatus.DONE).length;
+  const childrenDone = children.filter(i => i.status === doneKey).length;
   const parent = issue.parentId ? allIssues.find(i => i.id === issue.parentId) : null;
 
   return (

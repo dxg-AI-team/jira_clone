@@ -28,6 +28,7 @@ import { TopActions, TopActionsRight, Content, Left, Right } from './Styles';
 
 const propTypes = {
   issueId: PropTypes.string.isRequired,
+  project: PropTypes.object.isRequired,
   projectUsers: PropTypes.array.isRequired,
   projectVersions: PropTypes.array.isRequired,
   projectComponents: PropTypes.array.isRequired,
@@ -39,6 +40,7 @@ const propTypes = {
 
 const ProjectBoardIssueDetails = ({
   issueId,
+  project,
   projectUsers,
   projectVersions,
   projectComponents,
@@ -93,16 +95,16 @@ const ProjectBoardIssueDetails = ({
       </TopActions>
       <Content>
         <Left>
-          <SubTasks issue={issue} fetchIssue={fetchIssue} mode="parent" />
+          <SubTasks issue={issue} fetchIssue={fetchIssue} project={project} mode="parent" />
           <Title issue={issue} updateIssue={updateIssue} />
           <Description issue={issue} updateIssue={updateIssue} />
-          <SubTasks issue={issue} fetchIssue={fetchIssue} mode="children" />
+          <SubTasks issue={issue} fetchIssue={fetchIssue} project={project} mode="children" />
           <Attachments issue={issue} fetchIssue={fetchIssue} />
           <Comments issue={issue} fetchIssue={fetchIssue} mentionUsers={projectUsers} />
           <Activity issue={issue} />
         </Left>
         <Right>
-          <Status issue={issue} updateIssue={updateIssue} />
+          <Status issue={issue} updateIssue={updateIssue} project={project} />
           <AssigneesReporter issue={issue} updateIssue={updateIssue} projectUsers={projectUsers} />
           <Watchers issue={issue} updateLocalIssueWatchers={updateLocalIssueWatchers} />
           <Priority issue={issue} updateIssue={updateIssue} />
@@ -113,7 +115,12 @@ const ProjectBoardIssueDetails = ({
             projectComponents={projectComponents}
           />
           <Attributes issue={issue} updateIssue={updateIssue} projectIssues={projectIssues} />
-          <IssueLinks issue={issue} projectIssues={projectIssues} fetchIssue={fetchIssue} />
+          <IssueLinks
+            issue={issue}
+            projectIssues={projectIssues}
+            fetchIssue={fetchIssue}
+            project={project}
+          />
           <EstimateTracking issue={issue} updateIssue={updateIssue} />
           <Dates issue={issue} />
         </Right>

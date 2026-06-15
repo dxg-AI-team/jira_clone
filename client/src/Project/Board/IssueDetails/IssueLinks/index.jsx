@@ -5,7 +5,7 @@ import { useHistory } from 'react-router-dom';
 import api from 'shared/utils/api';
 import toast from 'shared/utils/toast';
 import { Button, Select } from 'shared/components';
-import { IssueStatus, IssueStatusCopy } from 'shared/constants/issues';
+import { getColumnName, columnColorForKey } from 'shared/utils/workflow';
 import { getCurrentProjectId } from 'shared/utils/currentProject';
 
 import { SectionTitle } from '../Styles';
@@ -33,20 +33,14 @@ const linkTypeOptions = Object.keys(LINK_TYPE_COPY).map(value => ({
   label: LINK_TYPE_COPY[value],
 }));
 
-const statusColors = {
-  [IssueStatus.BACKLOG]: '#8993a4',
-  [IssueStatus.SELECTED]: '#5e6c84',
-  [IssueStatus.INPROGRESS]: '#0052cc',
-  [IssueStatus.DONE]: '#0B875B',
-};
-
 const propTypes = {
   issue: PropTypes.object.isRequired,
   projectIssues: PropTypes.array.isRequired,
   fetchIssue: PropTypes.func.isRequired,
+  project: PropTypes.object.isRequired,
 };
 
-const IssueLinks = ({ issue, projectIssues, fetchIssue }) => {
+const IssueLinks = ({ issue, projectIssues, fetchIssue, project }) => {
   const history = useHistory();
   const [isAdding, setAdding] = useState(false);
   const [type, setType] = useState('relates');
@@ -105,8 +99,8 @@ const IssueLinks = ({ issue, projectIssues, fetchIssue }) => {
           {grouped[linkType].map(link => (
             <LinkRow key={link.id}>
               {link.issue && (
-                <StatusTag bg={statusColors[link.issue.status]}>
-                  {IssueStatusCopy[link.issue.status] || link.issue.status}
+                <StatusTag bg={columnColorForKey(project, link.issue.status)}>
+                  {getColumnName(project, link.issue.status)}
                 </StatusTag>
               )}
               <LinkTitle onClick={() => link.issue && goToIssue(link.issue.id)}>
