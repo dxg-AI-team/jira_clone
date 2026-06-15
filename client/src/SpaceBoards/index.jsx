@@ -376,18 +376,15 @@ const BoardForm = ({ spaceId, onSuccess }) => (
 
 const MemberForm = ({ spaceId, onSuccess }) => (
   <Form
-    initialValues={{ email: '', name: '' }}
-    validations={{ email: [Form.is.required(), Form.is.email()] }}
+    initialValues={{ emails: '' }}
+    validations={{ emails: [Form.is.required()] }}
     onSubmit={async (values, form) => {
       try {
-        const res = await api.post(`/spaces/${spaceId}/members`, {
-          email: values.email,
-          name: values.name,
-        });
+        const res = await api.post(`/spaces/${spaceId}/members`, { emails: values.emails });
+        const added = res.added || 0;
+        const sent = res.emailsSent || 0;
         toast.success(
-          res.emailSent
-            ? 'メンバーを追加し、招待メールを送信しました。'
-            : 'メンバーを追加しました。',
+          `${added} 人をメンバーに追加しました${sent ? `（招待メール ${sent} 件送信）` : ''}。`,
         );
         onSuccess();
       } catch (error) {
@@ -397,12 +394,11 @@ const MemberForm = ({ spaceId, onSuccess }) => (
   >
     <FormElement>
       <FormHeading>メンバーを追加</FormHeading>
-      <Form.Field.Input
-        name="email"
+      <Form.Field.Textarea
+        name="emails"
         label="メールアドレス"
-        tip="このメールの Google アカウントでログインできるようになります（招待制）。"
+        tip="複数招待する場合はカンマまたは改行で区切ってください。各アドレスの Google アカウントでログインできるようになります（招待制）。"
       />
-      <Form.Field.Input name="name" label="名前（任意）" />
       <Actions>
         <Button type="submit" variant="primary">
           追加

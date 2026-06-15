@@ -116,50 +116,90 @@ export const remove = catchErrors(async (req, res) => {
   res.respond({ space });
 });
 
-// Add a member to a space. Accepts either an existing { userId } or an { email }
-// (+ optional name) — the email path pre-registers (invites) the user so they
-// can sign in later under the allowlist model.
+// Parse one-or-many email addresses from an array or a delimited string
+// (comma / semicolon / whitespace / newline), trimmed, de-duped (case
+// insensitive) and basic-format validated.
+const parseEmails = (raw: unknown): string[] => {
+  if (raw == null) return [];
+  const list = Array.isArray(raw) ? raw : String(raw).split(/[\s,;]+/);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  list.forEach(item => {
+    const email = String(item).trim();
+    const key = email.toLowerCase();
+    if (!email || seen.has(key)) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+    seen.add(key);
+    out.push(email);
+  });
+  return out;
+};
+
+// Add a user to a space's members, skipping if already a member (avoids a
+// junction-table unique violation on re-invite).
+const addMemberIfNeeded = async (spaceId: number, userId: number): Promise<void> => {
+  const alreadyMember = await Space.createQueryBuilder('s')
+    .leftJoin('s.users', 'u')
+    .where('s.id = :spaceId', { spaceId })
+    .andWhere('u.id = :userId', { userId })
+    .getCount();
+  if (!alreadyMember) {
+    await addToRelation('users', spaceId, userId);
+  }
+};
+
+const findOrCreateByEmail = async (email: string): Promise<User> => {
+  const existing = await User.createQueryBuilder('u')
+    .where('LOWER(u.email) = LOWER(:email)', { email })
+    .getOne();
+  if (existing) return existing;
+  return createEntity(User, {
+    name: email,
+    email,
+    avatarUrl: '',
+    googleId: null,
+    role: 'member',
+  } as Partial<User>);
+};
+
+// Add member(s) to a space. Accepts an existing { userId }, a single { email },
+// or { emails } (array or delimited string) for bulk invites. Each invited
+// address is pre-registered (allowlist) and emailed an invitation.
 export const addMember = catchErrors(async (req, res) => {
   const spaceId = Number(req.params.spaceId);
   const space = await requireSpaceAdmin(req, spaceId);
 
-  let user: User | undefined;
-
   if (req.body.userId) {
-    user = await findEntityOrThrow(User, Number(req.body.userId));
-  } else if (req.body.email) {
-    const email = String(req.body.email).trim();
-    user = await User.createQueryBuilder('u')
-      .where('LOWER(u.email) = LOWER(:email)', { email })
-      .getOne();
-    if (!user) {
-      user = await createEntity(User, {
-        name: (req.body.name && String(req.body.name).trim()) || email,
-        email,
-        avatarUrl: '',
-        googleId: null,
-        role: 'member',
-      } as Partial<User>);
-    }
-  } else {
-    throw new BadUserInputError({ fields: { email: 'メールアドレスを入力してください。' } });
+    const user = await findEntityOrThrow(User, Number(req.body.userId));
+    await addMemberIfNeeded(spaceId, user.id);
+    const emailSent = await sendInviteEmail(user.email, space.name, req.currentUser.name);
+    res.respond({
+      added: 1,
+      emailsSent: emailSent ? 1 : 0,
+      results: [{ email: user.email, emailSent }],
+    });
+    return;
   }
 
-  // Add to the space only if not already a member (re-inviting an existing
-  // member shouldn't error — it just re-sends the invitation email).
-  const alreadyMember = await Space.createQueryBuilder('s')
-    .leftJoin('s.users', 'u')
-    .where('s.id = :spaceId', { spaceId })
-    .andWhere('u.id = :userId', { userId: user.id })
-    .getCount();
-  if (!alreadyMember) {
-    await addToRelation('users', spaceId, user.id);
+  const emails = parseEmails(req.body.emails != null ? req.body.emails : req.body.email);
+  if (emails.length === 0) {
+    throw new BadUserInputError({ fields: { emails: '有効なメールアドレスを入力してください。' } });
   }
 
-  // Best-effort invitation email (no-op if SMTP isn't configured).
-  const emailSent = await sendInviteEmail(user.email, space.name, req.currentUser.name);
+  const results = [];
+  // eslint-disable-next-line no-restricted-syntax
+  for (const email of emails) {
+    const user = await findOrCreateByEmail(email);
+    await addMemberIfNeeded(spaceId, user.id);
+    const emailSent = await sendInviteEmail(user.email, space.name, req.currentUser.name);
+    results.push({ email: user.email, emailSent });
+  }
 
-  res.respond({ user, emailSent });
+  res.respond({
+    added: results.length,
+    emailsSent: results.filter(r => r.emailSent).length,
+    results,
+  });
 });
 
 export const removeMember = catchErrors(async (req, res) => {

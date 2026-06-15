@@ -37,6 +37,12 @@ const findOrCreateGoogleUser = async (payload: GooglePayload): Promise<User | nu
       user.avatarUrl = picture;
       changed = true;
     }
+    // Invited users are created with their email as a placeholder name; replace
+    // it with the real Google display name on first sign-in.
+    if (name && (!user.name || user.name === user.email)) {
+      user.name = name;
+      changed = true;
+    }
     if (changed) {
       await user.save();
     }
