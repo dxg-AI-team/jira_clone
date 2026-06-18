@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useRouteMatch } from 'react-router-dom';
 import { Draggable } from 'react-beautiful-dnd';
 
+import { formatIssueKey } from 'shared/utils/issueKey';
 import { IssueTypeIcon, IssuePriorityIcon, Icon } from 'shared/components';
 
 import {
@@ -12,6 +13,7 @@ import {
   ParentChip,
   Bottom,
   LeftMeta,
+  IssueKey,
   SubtaskBadge,
   Assignees,
   AssigneeAvatar,
@@ -19,6 +21,7 @@ import {
 
 const propTypes = {
   projectUsers: PropTypes.array.isRequired,
+  projectKey: PropTypes.string,
   issue: PropTypes.object.isRequired,
   index: PropTypes.number.isRequired,
   allIssues: PropTypes.array,
@@ -26,11 +29,12 @@ const propTypes = {
 };
 
 const defaultProps = {
+  projectKey: null,
   allIssues: [],
   doneKey: 'done',
 };
 
-const ProjectBoardListIssue = ({ projectUsers, issue, index, allIssues, doneKey }) => {
+const ProjectBoardListIssue = ({ projectUsers, projectKey, issue, index, allIssues, doneKey }) => {
   const match = useRouteMatch();
 
   const assignees = issue.userIds.map(userId => projectUsers.find(user => user.id === userId));
@@ -61,6 +65,9 @@ const ProjectBoardListIssue = ({ projectUsers, issue, index, allIssues, doneKey 
               <LeftMeta>
                 <IssueTypeIcon type={issue.type} />
                 <IssuePriorityIcon priority={issue.priority} top={-1} left={4} />
+                {issue.number != null && (
+                  <IssueKey>{formatIssueKey(projectKey, issue.number)}</IssueKey>
+                )}
                 {children.length > 0 && (
                   <SubtaskBadge title="サブタスクの完了数">
                     <Icon type="task" size={13} />

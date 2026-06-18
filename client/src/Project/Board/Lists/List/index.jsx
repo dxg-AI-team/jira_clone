@@ -48,6 +48,7 @@ const ProjectBoardList = ({ column, project, filters, currentUserId }) => {
               <Issue
                 key={issue.id}
                 projectUsers={project.users}
+                projectKey={project.key}
                 issue={issue}
                 index={index}
                 allIssues={project.issues}

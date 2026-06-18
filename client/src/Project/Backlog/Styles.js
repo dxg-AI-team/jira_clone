@@ -118,6 +118,15 @@ export const IssueRow = styled.div`
   }
 `;
 
+export const IssueKey = styled.span`
+  flex-shrink: 0;
+  margin-left: 10px;
+  ${font.size(13)}
+  ${font.medium}
+  color: ${color.textMedium};
+  white-space: nowrap;
+`;
+
 export const IssueTitle = styled.div`
   flex: 1;
   min-width: 0;

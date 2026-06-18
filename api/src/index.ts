@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 
 import createDatabaseConnection from 'database/createConnection';
+import { backfillKeys } from 'database/backfillKeys';
 import { addRespondToResponse } from 'middleware/response';
 import { authenticateUser } from 'middleware/authentication';
 import { selectProject } from 'middleware/selectProject';
@@ -16,6 +17,7 @@ import { attachPublicRoutes, attachPrivateRoutes } from './routes';
 const establishDatabaseConnection = async (): Promise<void> => {
   try {
     await createDatabaseConnection();
+    await backfillKeys();
   } catch (error) {
     console.log(error);
   }

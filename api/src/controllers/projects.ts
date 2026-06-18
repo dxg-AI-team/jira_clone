@@ -1,10 +1,35 @@
-import { getConnection } from 'typeorm';
+import { getConnection, Not } from 'typeorm';
 
 import { Project, Space } from 'entities';
-import { catchErrors, AuthorizationError } from 'errors';
+import { catchErrors, AuthorizationError, BadUserInputError } from 'errors';
 import { findEntityOrThrow, updateEntity, createEntity } from 'utils/typeorm';
 import { issuePartial } from 'serializers/issues';
 import { getColumnKeys } from 'utils/workflow';
+import { normalizeKey, isValidKey } from 'utils/projectKey';
+
+// Validate and normalize a board key, ensuring it is unique within its space.
+// Throws a field-level error so the form can highlight the key input.
+const resolveKey = async (
+  raw: unknown,
+  spaceId: number,
+  excludeBoardId?: number,
+): Promise<string> => {
+  const key = normalizeKey(raw);
+  if (!isValidKey(key)) {
+    throw new BadUserInputError({
+      fields: { key: 'キーは英大文字で始まる2〜10文字の英数字で入力してください（例: ABC）。' },
+    });
+  }
+  const where: { spaceId: number; key: string; id?: any } = { spaceId, key };
+  if (excludeBoardId) where.id = Not(excludeBoardId);
+  const existing = await Project.findOne({ where });
+  if (existing) {
+    throw new BadUserInputError({
+      fields: { key: `キー「${key}」はこのスペースで既に使われています。` },
+    });
+  }
+  return key;
+};
 
 const requireSpaceMember = (req: any, spaceId: number): void => {
   if (!(req.currentUser.spaceIds || []).includes(Number(spaceId))) {
@@ -32,8 +57,9 @@ export const getSpaceBoards = catchErrors(async (req, res) => {
 });
 
 export const create = catchErrors(async (req, res) => {
-  const { name, url, description, category, icon, avatarUrl, spaceId } = req.body;
+  const { name, url, description, category, icon, avatarUrl, spaceId, key } = req.body;
   await requireSpaceAdmin(req, spaceId);
+  const resolvedKey = await resolveKey(key, Number(spaceId));
   const project = await createEntity(Project, {
     name,
     url,
@@ -42,6 +68,7 @@ export const create = catchErrors(async (req, res) => {
     icon,
     avatarUrl,
     spaceId,
+    key: resolvedKey,
   });
   res.respond({ project });
 });
@@ -63,6 +90,13 @@ export const getProjectWithUsersAndIssues = catchErrors(async (req, res) => {
 });
 
 export const update = catchErrors(async (req, res) => {
+  // A key change renames every issue key on the board, so validate it the same
+  // way as on create (format + per-space uniqueness, excluding this board).
+  if (req.body.key !== undefined) {
+    const current = await findEntityOrThrow(Project, req.projectId);
+    req.body.key = await resolveKey(req.body.key, current.spaceId, current.id);
+  }
+
   const project = await updateEntity(Project, req.projectId, req.body);
 
   // If the workflow (columns) changed, move any issue whose status is no longer

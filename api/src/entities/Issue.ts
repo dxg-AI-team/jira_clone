@@ -34,6 +34,12 @@ class Issue extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
+  // Per-board sequential issue number. Combined with the board key it forms the
+  // issue key (e.g. ABC-12). Nullable so synchronize can add it to existing
+  // rows; a startup backfill assigns numbers to legacy issues.
+  @Column('integer', { nullable: true })
+  number: number | null;
+
   @Column('varchar')
   title: string;
 

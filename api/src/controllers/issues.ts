@@ -93,7 +93,8 @@ export const getIssueWithUsersAndComments = catchErrors(async (req, res) => {
 export const create = catchErrors(async (req, res) => {
   const { projectId } = req;
   const listPosition = await calculateListPosition({ ...req.body, projectId });
-  const issue = await createEntity(Issue, { ...req.body, projectId, listPosition });
+  const number = await nextIssueNumber(projectId);
+  const issue = await createEntity(Issue, { ...req.body, projectId, listPosition, number });
   await logActivity(issue.id, req.currentUser.id, 'created', 'この課題を作成しました');
   res.respond({ issue });
 });
@@ -196,6 +197,15 @@ const inverseLinkType = (type: string): string => {
   };
   /* eslint-enable @typescript-eslint/camelcase */
   return map[type] || type;
+};
+
+// Next per-board issue number (max + 1), forming the issue key with the board key.
+const nextIssueNumber = async (projectId: number): Promise<number> => {
+  const result = await Issue.createQueryBuilder('issue')
+    .select('MAX(issue.number)', 'max')
+    .where('issue.projectId = :projectId', { projectId })
+    .getRawOne();
+  return (result && result.max ? Number(result.max) : 0) + 1;
 };
 
 const calculateListPosition = async ({ projectId, status }: Issue): Promise<number> => {

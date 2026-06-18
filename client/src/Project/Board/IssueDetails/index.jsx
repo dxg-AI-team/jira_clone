@@ -79,7 +79,7 @@ const ProjectBoardIssueDetails = ({
   return (
     <Fragment>
       <TopActions>
-        <Type issue={issue} updateIssue={updateIssue} />
+        <Type issue={issue} project={project} updateIssue={updateIssue} />
         <TopActionsRight>
           <AboutTooltip
             renderLink={linkProps => (

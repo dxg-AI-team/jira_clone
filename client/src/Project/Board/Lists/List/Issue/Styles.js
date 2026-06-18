@@ -75,6 +75,14 @@ export const LeftMeta = styled.div`
   align-items: center;
 `;
 
+export const IssueKey = styled.span`
+  margin-left: 6px;
+  ${font.size(12.5)}
+  ${font.medium}
+  color: ${color.textMedium};
+  text-transform: uppercase;
+`;
+
 export const Assignees = styled.div`
   display: flex;
   flex-direction: row-reverse;

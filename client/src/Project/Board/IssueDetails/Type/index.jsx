@@ -2,16 +2,22 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { IssueType, IssueTypeCopy } from 'shared/constants/issues';
+import { issueKey } from 'shared/utils/issueKey';
 import { IssueTypeIcon, Select } from 'shared/components';
 
 import { TypeButton, Type, TypeLabel } from './Styles';
 
 const propTypes = {
   issue: PropTypes.object.isRequired,
+  project: PropTypes.object,
   updateIssue: PropTypes.func.isRequired,
 };
 
-const ProjectBoardIssueDetailsType = ({ issue, updateIssue }) => (
+const defaultProps = {
+  project: null,
+};
+
+const ProjectBoardIssueDetailsType = ({ issue, project, updateIssue }) => (
   <Select
     variant="empty"
     dropdownWidth={150}
@@ -25,7 +31,7 @@ const ProjectBoardIssueDetailsType = ({ issue, updateIssue }) => (
     onChange={type => updateIssue({ type })}
     renderValue={({ value: type }) => (
       <TypeButton variant="empty" icon={<IssueTypeIcon type={type} />}>
-        {`${IssueTypeCopy[type]}-${issue.id}`}
+        {issueKey(project, issue)}
       </TypeButton>
     )}
     renderOption={({ value: type }) => (
@@ -38,5 +44,6 @@ const ProjectBoardIssueDetailsType = ({ issue, updateIssue }) => (
 );
 
 ProjectBoardIssueDetailsType.propTypes = propTypes;
+ProjectBoardIssueDetailsType.defaultProps = defaultProps;
 
 export default ProjectBoardIssueDetailsType;

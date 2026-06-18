@@ -8,6 +8,7 @@ import toast from 'shared/utils/toast';
 import { formatDate } from 'shared/utils/dateTime';
 import { moveItemWithinArray, insertItemIntoArray } from 'shared/utils/javascript';
 import { getDoneKey } from 'shared/utils/workflow';
+import { formatIssueKey } from 'shared/utils/issueKey';
 import {
   Button,
   ConfirmModal,
@@ -33,6 +34,7 @@ import {
   BacklogSection,
   SectionTitle,
   IssueRow,
+  IssueKey,
   IssueTitle,
   Points,
   FormHeading,
@@ -150,6 +152,9 @@ const Backlog = ({ project, fetchProject }) => {
             {...provided.dragHandleProps}
           >
             <IssueTypeIcon type={issue.type} />
+            {issue.number != null && (
+              <IssueKey>{formatIssueKey(project.key, issue.number)}</IssueKey>
+            )}
             <IssueTitle
               style={completed ? { textDecoration: 'line-through', opacity: 0.6 } : undefined}
               onClick={() => history.push(`/project/${project.id}/board/issues/${issue.id}`)}

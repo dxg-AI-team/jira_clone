@@ -6,6 +6,7 @@ import { get } from 'lodash';
 import useApi from 'shared/hooks/api';
 import { sortByNewest } from 'shared/utils/javascript';
 import { getCurrentProjectId } from 'shared/utils/currentProject';
+import { formatIssueKey } from 'shared/utils/issueKey';
 import { IssueTypeIcon } from 'shared/components';
 
 import NoResultsSVG from './NoResultsSvg';
@@ -64,14 +65,14 @@ const ProjectIssueSearch = ({ project }) => {
       {isSearchTermEmpty && recentIssues.length > 0 && (
         <Fragment>
           <SectionTitle>最近の課題（このボード）</SectionTitle>
-          {recentIssues.map(renderIssue)}
+          {recentIssues.map(issue => renderIssue(issue, project.key))}
         </Fragment>
       )}
 
       {!isSearchTermEmpty && matchingIssues.length > 0 && (
         <Fragment>
           <SectionTitle>一致する課題（全ボード）</SectionTitle>
-          {matchingIssues.map(renderIssue)}
+          {matchingIssues.map(issue => renderIssue(issue))}
         </Fragment>
       )}
 
@@ -86,7 +87,7 @@ const ProjectIssueSearch = ({ project }) => {
   );
 };
 
-const renderIssue = issue => (
+const renderIssue = (issue, fallbackKey) => (
   <Link
     key={issue.id}
     to={`/project/${issue.projectId || getCurrentProjectId()}/board/issues/${issue.id}`}
@@ -96,7 +97,8 @@ const renderIssue = issue => (
       <IssueData>
         <IssueTitle>{issue.title}</IssueTitle>
         <IssueTypeId>
-          {`${issue.type}-${issue.id}`}
+          {formatIssueKey(issue.boardKey || fallbackKey, issue.number) ||
+            `${issue.type}-${issue.id}`}
           {issue.boardName ? ` ・ ${issue.boardName}` : ''}
         </IssueTypeId>
       </IssueData>

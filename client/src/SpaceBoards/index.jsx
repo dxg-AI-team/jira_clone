@@ -7,6 +7,7 @@ import api from 'shared/utils/api';
 import toast from 'shared/utils/toast';
 import useApi from 'shared/hooks/api';
 import { ProjectCategory, ProjectCategoryCopy } from 'shared/constants/projects';
+import { normalizeKey, isValidKey, suggestKey } from 'shared/utils/projectKey';
 import {
   Button,
   ConfirmModal,
@@ -195,7 +196,10 @@ const SpaceBoards = () => {
                 <ProjectAvatar name={board.name} icon={board.icon} avatarUrl={board.avatarUrl} />
                 <CardMeta>
                   <CardName>{board.name}</CardName>
-                  <CardSub>{ProjectCategoryCopy[board.category]}ボード</CardSub>
+                  <CardSub>
+                    {board.key ? `${board.key} ・ ` : ''}
+                    {ProjectCategoryCopy[board.category]}ボード
+                  </CardSub>
                 </CardMeta>
               </Card>
             ))}
@@ -344,16 +348,48 @@ const SpaceEditForm = ({ spaceId, space, onSuccess }) => (
   </Form>
 );
 
+// Live-normalize the key field and auto-suggest it from the board name until
+// the user types their own key.
+const BoardKeyEffects = () => {
+  const { values, setFieldValue } = useFormikContext();
+  const lastSuggested = React.useRef('');
+
+  React.useEffect(() => {
+    const normalized = normalizeKey(values.key);
+    if (normalized !== values.key) setFieldValue('key', normalized);
+  }, [values.key, setFieldValue]);
+
+  React.useEffect(() => {
+    if (values.key === lastSuggested.current) {
+      const suggestion = suggestKey(values.name);
+      lastSuggested.current = suggestion;
+      setFieldValue('key', suggestion);
+    }
+    // Only react to name changes; key edits are handled above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.name]);
+
+  return null;
+};
+
 const BoardForm = ({ spaceId, onSuccess }) => (
   <Form
-    initialValues={{ name: '', category: ProjectCategory.SOFTWARE, icon: '📋' }}
+    initialValues={{ name: '', key: '', category: ProjectCategory.SOFTWARE, icon: '📋' }}
     validations={{
       name: [Form.is.required(), Form.is.maxLength(100)],
+      key: [
+        Form.is.required(),
+        Form.is.match(isValidKey, '英大文字で始まる2〜10文字の英数字で入力してください（例: ABC）'),
+      ],
       category: Form.is.required(),
     }}
     onSubmit={async (values, form) => {
       try {
-        await api.post('/projects', { ...values, spaceId: Number(spaceId) });
+        await api.post('/projects', {
+          ...values,
+          key: normalizeKey(values.key),
+          spaceId: Number(spaceId),
+        });
         toast.success('ボードを作成しました。');
         onSuccess();
       } catch (error) {
@@ -361,9 +397,15 @@ const BoardForm = ({ spaceId, onSuccess }) => (
       }
     }}
   >
+    <BoardKeyEffects />
     <FormElement>
       <FormHeading>ボードを作成</FormHeading>
       <Form.Field.Input name="name" label="名前" />
+      <Form.Field.Input
+        name="key"
+        label="プロジェクトキー"
+        tip="課題キーの接頭辞になります（例: ABC → ABC-1）。スペース内で重複できません。"
+      />
       <Form.Field.Select name="category" label="カテゴリ" options={categoryOptions} />
       <Actions>
         <Button type="submit" variant="primary">

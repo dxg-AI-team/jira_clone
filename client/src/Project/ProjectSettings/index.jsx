@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useFormikContext } from 'formik';
 
 import { ProjectCategory, ProjectCategoryCopy } from 'shared/constants/projects';
 import { getColumns } from 'shared/utils/workflow';
+import { normalizeKey, isValidKey } from 'shared/utils/projectKey';
 import api from 'shared/utils/api';
 import toast from 'shared/utils/toast';
 import useApi from 'shared/hooks/api';
@@ -35,6 +36,16 @@ const newColumnKey = () => {
 };
 
 const iconOptions = ['📋', '🚀', '🐞', '💼', '🎨', '⚙️', '📊', '🔧', '🌟', '📁', '💡', '🧩'];
+
+// Live-normalize the key field (uppercase + strip invalid characters).
+const KeyNormalizeEffect = () => {
+  const { values, setFieldValue } = useFormikContext();
+  useEffect(() => {
+    const normalized = normalizeKey(values.key);
+    if (normalized !== values.key) setFieldValue('key', normalized);
+  }, [values.key, setFieldValue]);
+  return null;
+};
 
 const IconPicker = () => {
   const { values, setFieldValue } = useFormikContext();
@@ -187,6 +198,7 @@ const ProjectSettings = ({ project, fetchProject }) => {
       <Form
         initialValues={Form.initialValues(project, get => ({
           name: get('name'),
+          key: get('key', ''),
           icon: get('icon', null),
           avatarUrl: get('avatarUrl', ''),
           url: get('url'),
@@ -195,12 +207,19 @@ const ProjectSettings = ({ project, fetchProject }) => {
         }))}
         validations={{
           name: [Form.is.required(), Form.is.maxLength(100)],
+          key: [
+            Form.is.required(),
+            Form.is.match(
+              isValidKey,
+              '英大文字で始まる2〜10文字の英数字で入力してください（例: ABC）',
+            ),
+          ],
           url: Form.is.url(),
           category: Form.is.required(),
         }}
         onSubmit={async (values, form) => {
           try {
-            await updateProject(values);
+            await updateProject({ ...values, key: normalizeKey(values.key) });
             await fetchProject();
             toast.success('変更を保存しました。');
           } catch (error) {
@@ -215,7 +234,13 @@ const ProjectSettings = ({ project, fetchProject }) => {
             />
             <FormHeading>ボード設定</FormHeading>
 
+            <KeyNormalizeEffect />
             <Form.Field.Input name="name" label="名前" />
+            <Form.Field.Input
+              name="key"
+              label="プロジェクトキー"
+              tip="課題キーの接頭辞になります（例: ABC → ABC-1）。変更すると既存課題のキー表示もすべて更新されます。"
+            />
             <IconPicker />
             <Form.Field.Input
               name="avatarUrl"

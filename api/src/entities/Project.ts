@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   OneToMany,
   ManyToOne,
+  Index,
 } from 'typeorm';
 
 import is from 'utils/validation';
@@ -14,6 +15,9 @@ import { ProjectCategory } from 'constants/projects';
 import { Issue, Space, ProjectVersion, Component, Sprint } from '.';
 
 @Entity()
+// Board key is unique within a space (Postgres treats NULL keys as distinct, so
+// existing rows are left alone until the startup backfill assigns them a key).
+@Index(['spaceId', 'key'], { unique: true })
 class Project extends BaseEntity {
   static validations = {
     name: [is.required(), is.maxLength(100)],
@@ -26,6 +30,12 @@ class Project extends BaseEntity {
 
   @Column('varchar')
   name: string;
+
+  // Short uppercase identifier shown as the prefix of every issue key (ABC-1).
+  // Nullable in the schema so synchronize can add the column to existing rows;
+  // a startup backfill then assigns a unique key to every board.
+  @Column('varchar', { length: 10, nullable: true })
+  key: string | null;
 
   @Column('varchar', { nullable: true })
   icon: string | null;

@@ -5,6 +5,7 @@ import { Issue } from 'entities';
 export const issuePartial = (issue: Issue): Partial<Issue> =>
   pick(issue, [
     'id',
+    'number',
     'title',
     'type',
     'status',
