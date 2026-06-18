@@ -67,7 +67,10 @@ const SpacesList = () => {
   const [isCreateOpen, setCreateOpen] = useState(false);
 
   const currentUser = currentUserData && currentUserData.currentUser;
-  const isAdmin = !!currentUser && currentUser.role === 'admin';
+  const isGlobalAdmin = !!currentUser && currentUser.role === 'admin';
+  // Anyone can delete a space they administer (global admin or that space's admin).
+  const canManage = space =>
+    isGlobalAdmin || (!!currentUser && (space.adminIds || []).includes(currentUser.id));
 
   if (isLoading && !data) return <PageLoader />;
   if (error) return <PageError />;
@@ -98,25 +101,20 @@ const SpacesList = () => {
         <TopBar>
           <Title>スペース</Title>
           <TopActions>
-            {isAdmin && (
-              <Button variant="primary" onClick={() => setCreateOpen(true)}>
-                スペースを作成
-              </Button>
-            )}
+            <Button variant="primary" onClick={() => setCreateOpen(true)}>
+              スペースを作成
+            </Button>
             <LinkText onClick={handleLogout}>ログアウト</LinkText>
           </TopActions>
         </TopBar>
 
         {spaces.length === 0 ? (
-          <Empty>
-            参加しているスペースがありません。
-            {isAdmin && '「スペースを作成」から追加してください。'}
-          </Empty>
+          <Empty>参加しているスペースがありません。「スペースを作成」から追加してください。</Empty>
         ) : (
           <Grid>
             {spaces.map(space => (
               <Card key={space.id} onClick={() => history.push(`/space/${space.id}`)}>
-                {isAdmin && (
+                {canManage(space) && (
                   <DeleteButton onClick={e => e.stopPropagation()}>
                     <ConfirmModal
                       title={`「${space.name}」を削除しますか？`}

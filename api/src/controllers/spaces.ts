@@ -5,12 +5,6 @@ import { catchErrors, AuthorizationError, BadUserInputError } from 'errors';
 import { createEntity, updateEntity, findEntityOrThrow } from 'utils/typeorm';
 import { sendInviteEmail } from 'utils/mail';
 
-const requireAdmin = (req: any): void => {
-  if (req.currentUser.role !== 'admin') {
-    throw new AuthorizationError('管理者のみが実行できる操作です。');
-  }
-};
-
 const requireSpaceMember = (req: any, spaceId: number): void => {
   if (!(req.currentUser.spaceIds || []).includes(Number(spaceId))) {
     throw new AuthorizationError('このスペースにアクセスする権限がありません。');
@@ -49,11 +43,11 @@ export const getMySpaces = catchErrors(async (req, res) => {
   res.respond({ spaces });
 });
 
+// Any authenticated (allowlisted) user can create a space; the creator becomes
+// its first member and admin.
 export const create = catchErrors(async (req, res) => {
-  requireAdmin(req);
   const { name, icon, avatarUrl } = req.body;
   const space = await createEntity(Space, { name, icon, avatarUrl });
-  // The creator becomes both a member and a space admin.
   await addToRelation('users', space.id, req.currentUser.id);
   await addToRelation('admins', space.id, req.currentUser.id);
   res.respond({ space });
