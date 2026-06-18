@@ -43,9 +43,12 @@ export const getMySpaces = catchErrors(async (req, res) => {
   res.respond({ spaces });
 });
 
-// Any authenticated (allowlisted) user can create a space; the creator becomes
-// its first member and admin.
+// Space creation is limited to global admins and users granted the
+// canCreateSpace permission. The creator becomes the space's first member+admin.
 export const create = catchErrors(async (req, res) => {
+  if (req.currentUser.role !== 'admin' && !req.currentUser.canCreateSpace) {
+    throw new AuthorizationError('スペースを作成する権限がありません。管理者に依頼してください。');
+  }
   const { name, icon, avatarUrl } = req.body;
   const space = await createEntity(Space, { name, icon, avatarUrl });
   await addToRelation('users', space.id, req.currentUser.id);

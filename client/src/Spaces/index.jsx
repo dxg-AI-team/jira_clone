@@ -68,6 +68,8 @@ const SpacesList = () => {
 
   const currentUser = currentUserData && currentUserData.currentUser;
   const isGlobalAdmin = !!currentUser && currentUser.role === 'admin';
+  // Space creation is limited to global admins and granted users.
+  const canCreateSpace = isGlobalAdmin || (!!currentUser && currentUser.canCreateSpace);
   // Anyone can delete a space they administer (global admin or that space's admin).
   const canManage = space =>
     isGlobalAdmin || (!!currentUser && (space.adminIds || []).includes(currentUser.id));
@@ -101,15 +103,23 @@ const SpacesList = () => {
         <TopBar>
           <Title>スペース</Title>
           <TopActions>
-            <Button variant="primary" onClick={() => setCreateOpen(true)}>
-              スペースを作成
-            </Button>
+            {canCreateSpace && (
+              <Button variant="primary" onClick={() => setCreateOpen(true)}>
+                スペースを作成
+              </Button>
+            )}
+            {isGlobalAdmin && (
+              <LinkText onClick={() => history.push('/admin/users')}>ユーザー管理</LinkText>
+            )}
             <LinkText onClick={handleLogout}>ログアウト</LinkText>
           </TopActions>
         </TopBar>
 
         {spaces.length === 0 ? (
-          <Empty>参加しているスペースがありません。「スペースを作成」から追加してください。</Empty>
+          <Empty>
+            参加しているスペースがありません。
+            {canCreateSpace && '「スペースを作成」から追加してください。'}
+          </Empty>
         ) : (
           <Grid>
             {spaces.map(space => (

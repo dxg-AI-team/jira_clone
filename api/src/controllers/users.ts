@@ -78,6 +78,9 @@ export const update = catchErrors(async (req, res) => {
   if (typeof req.body.name !== 'undefined') input.name = req.body.name;
   if (typeof req.body.avatarUrl !== 'undefined') input.avatarUrl = req.body.avatarUrl;
   if (isAdmin && typeof req.body.email !== 'undefined') input.email = req.body.email;
+  if (isAdmin && typeof req.body.canCreateSpace !== 'undefined') {
+    input.canCreateSpace = !!req.body.canCreateSpace;
+  }
   if (isAdmin && typeof req.body.role !== 'undefined' && req.body.role !== target.role) {
     if (target.role === 'admin' && req.body.role !== 'admin') {
       await ensureNotLastAdmin(targetId);

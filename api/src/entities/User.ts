@@ -36,6 +36,11 @@ class User extends BaseEntity {
   @Column('varchar', { default: 'member' })
   role: string;
 
+  // Whether this user may create spaces (granted by a global admin). Global
+  // admins can always create spaces regardless of this flag.
+  @Column('boolean', { default: false })
+  canCreateSpace: boolean;
+
   @Column('varchar', { length: 100, nullable: true })
   googleId: string;
 
