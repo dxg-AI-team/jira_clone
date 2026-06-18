@@ -397,8 +397,8 @@ const BoardForm = ({ spaceId, onSuccess }) => (
       }
     }}
   >
-    <BoardKeyEffects />
     <FormElement>
+      <BoardKeyEffects />
       <FormHeading>ボードを作成</FormHeading>
       <Form.Field.Input name="name" label="名前" />
       <Form.Field.Input
