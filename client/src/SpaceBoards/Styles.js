@@ -43,6 +43,7 @@ export const SpaceName = styled.h1`
   ${font.bold}
   ${font.size(26)}
   color: ${color.textDarkest};
+  ${mixin.truncateText}
 `;
 
 export const SectionHead = styled.div`

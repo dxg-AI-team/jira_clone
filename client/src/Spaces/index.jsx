@@ -172,7 +172,7 @@ const SpacesList = () => {
 const SpaceForm = ({ onSuccess }) => (
   <Form
     initialValues={{ name: '', icon: '🏢' }}
-    validations={{ name: [Form.is.required(), Form.is.maxLength(100)] }}
+    validations={{ name: [Form.is.required(), Form.is.maxLength(50)] }}
     onSubmit={async (values, form) => {
       try {
         await api.post('/spaces', values);

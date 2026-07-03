@@ -79,6 +79,7 @@ export const SwitcherFooter = styled.div`
 `;
 
 export const ProjectTexts = styled.div`
+  min-width: 0;
   padding: 3px 0 0 10px;
 `;
 
@@ -86,6 +87,7 @@ export const ProjectName = styled.div`
   color: ${color.textDark};
   ${font.size(15)};
   ${font.medium};
+  ${mixin.truncateText};
 `;
 
 export const ProjectCategory = styled.div`

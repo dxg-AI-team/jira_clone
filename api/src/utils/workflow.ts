@@ -7,7 +7,7 @@ interface Column {
 }
 
 const DEFAULT_COLUMNS: Column[] = [
-  { key: IssueStatus.BACKLOG, name: 'バックログ' },
+  { key: IssueStatus.BACKLOG, name: '未着手' },
   { key: IssueStatus.SELECTED, name: '選択済み' },
   { key: IssueStatus.INPROGRESS, name: '進行中' },
   { key: IssueStatus.DONE, name: '完了' },

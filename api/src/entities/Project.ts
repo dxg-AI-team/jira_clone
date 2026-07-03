@@ -20,7 +20,7 @@ import { Issue, Space, ProjectVersion, Component, Sprint } from '.';
 @Index(['spaceId', 'key'], { unique: true })
 class Project extends BaseEntity {
   static validations = {
-    name: [is.required(), is.maxLength(100)],
+    name: [is.required(), is.maxLength(50)],
     url: is.url(),
     category: [is.required(), is.oneOf(Object.values(ProjectCategory))],
   };

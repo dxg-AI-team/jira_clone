@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { useHistory, useParams } from 'react-router-dom';
+import { Link, useHistory, useParams } from 'react-router-dom';
 import { useFormikContext } from 'formik';
 
 import api from 'shared/utils/api';
@@ -85,7 +85,23 @@ const SpaceBoards = () => {
   const [isEditOpen, setEditOpen] = useState(false);
 
   if (isLoading && !data) return <PageLoader />;
-  if (error) return <PageError />;
+  if (error) {
+    if (error.code === 'ENTITY_NOT_FOUND' || error.status === 404) {
+      return (
+        <PageError
+          title="スペースが見つかりません"
+          message={
+            <p>
+              このスペースは削除されたか、URL が正しくない可能性があります。
+              <br />
+              <Link to="/spaces">スペース一覧へ戻る</Link>
+            </p>
+          }
+        />
+      );
+    }
+    return <PageError />;
+  }
 
   const space = data && data.space;
   if (!space) return <PageLoader />;
@@ -324,7 +340,7 @@ const SpaceEditForm = ({ spaceId, space, onSuccess }) => (
       name: get('name', ''),
       icon: get('icon', null),
     }))}
-    validations={{ name: [Form.is.required(), Form.is.maxLength(100)] }}
+    validations={{ name: [Form.is.required(), Form.is.maxLength(50)] }}
     onSubmit={async (values, form) => {
       try {
         await api.put(`/spaces/${spaceId}`, values);
@@ -376,7 +392,7 @@ const BoardForm = ({ spaceId, onSuccess }) => (
   <Form
     initialValues={{ name: '', key: '', category: ProjectCategory.SOFTWARE, icon: '📋' }}
     validations={{
-      name: [Form.is.required(), Form.is.maxLength(100)],
+      name: [Form.is.required(), Form.is.maxLength(50)],
       key: [
         Form.is.required(),
         Form.is.match(isValidKey, '英大文字で始まる2〜10文字の英数字で入力してください（例: ABC）'),

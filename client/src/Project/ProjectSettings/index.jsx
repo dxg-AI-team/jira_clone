@@ -206,7 +206,7 @@ const ProjectSettings = ({ project, fetchProject }) => {
           description: get('description'),
         }))}
         validations={{
-          name: [Form.is.required(), Form.is.maxLength(100)],
+          name: [Form.is.required(), Form.is.maxLength(50)],
           key: [
             Form.is.required(),
             Form.is.match(

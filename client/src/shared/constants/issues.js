@@ -30,7 +30,7 @@ export const IssueTypeCopy = {
 };
 
 export const IssueStatusCopy = {
-  [IssueStatus.BACKLOG]: 'バックログ',
+  [IssueStatus.BACKLOG]: '未着手',
   [IssueStatus.SELECTED]: '選択済み',
   [IssueStatus.INPROGRESS]: '進行中',
   [IssueStatus.DONE]: '完了',

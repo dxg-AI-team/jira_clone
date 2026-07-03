@@ -1,5 +1,5 @@
 import React from 'react';
-import { Route, Redirect, useRouteMatch, useHistory, useParams } from 'react-router-dom';
+import { Route, Redirect, Link, useRouteMatch, useHistory, useParams } from 'react-router-dom';
 
 import useApi from 'shared/hooks/api';
 import { updateArrayItemById } from 'shared/utils/javascript';
@@ -38,8 +38,38 @@ const Project = () => {
 
   const [{ data, error, setLocalData }, fetchProject] = useApi.get('/project', { projectId });
 
+  if (error) {
+    if (error.code === 'ENTITY_NOT_FOUND' || error.status === 404) {
+      return (
+        <PageError
+          title="ボードが見つかりません"
+          message={
+            <p>
+              このボードは削除されたか、URL が正しくない可能性があります。
+              <br />
+              <Link to="/spaces">スペース一覧へ戻る</Link>
+            </p>
+          }
+        />
+      );
+    }
+    if (error.code === 'FORBIDDEN' || error.status === 403) {
+      return (
+        <PageError
+          title="アクセス権限がありません"
+          message={
+            <p>
+              このボードを表示する権限がありません。
+              <br />
+              <Link to="/spaces">スペース一覧へ戻る</Link>
+            </p>
+          }
+        />
+      );
+    }
+    return <PageError />;
+  }
   if (!data) return <PageLoader />;
-  if (error) return <PageError />;
 
   const { project } = data;
 

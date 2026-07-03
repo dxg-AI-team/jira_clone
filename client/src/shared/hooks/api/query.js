@@ -48,7 +48,7 @@ const useQuery = (url, propsVariables = {}, options = {}) => {
       wasCalled.current = true;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [propsVariablesMemoized],
+    [url, propsVariablesMemoized],
   );
 
   useEffect(() => {

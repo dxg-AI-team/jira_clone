@@ -38,6 +38,7 @@ const STATUS_MAP: { [key: string]: IssueStatus } = {
   resolved: IssueStatus.DONE,
   complete: IssueStatus.DONE,
   バックログ: IssueStatus.BACKLOG,
+  未着手: IssueStatus.BACKLOG,
   選択済み: IssueStatus.SELECTED,
   進行中: IssueStatus.INPROGRESS,
   完了: IssueStatus.DONE,

@@ -37,7 +37,7 @@ const is = {
 };
 
 const isNilOrEmptyString = (value: Value): boolean =>
-  value === undefined || value === null || value === '';
+  value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
 
 export const generateErrors = (
   fieldValues: FieldValues,

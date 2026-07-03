@@ -20,7 +20,8 @@ export const is = {
     '有効なURLを入力してください',
 };
 
-const isNilOrEmptyString = value => value === undefined || value === null || value === '';
+const isNilOrEmptyString = value =>
+  value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
 
 export const generateErrors = (fieldValues, fieldValidators) => {
   const errors = {};

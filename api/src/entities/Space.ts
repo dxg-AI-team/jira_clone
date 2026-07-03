@@ -17,7 +17,7 @@ import { User, Project } from '.';
 @Entity()
 class Space extends BaseEntity {
   static validations = {
-    name: [is.required(), is.maxLength(100)],
+    name: [is.required(), is.maxLength(50)],
   };
 
   @PrimaryGeneratedColumn()
