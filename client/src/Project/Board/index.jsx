@@ -68,6 +68,7 @@ const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
             onClose={() => history.push(match.url)}
             renderContent={modal => (
               <IssueDetails
+                key={routeProps.match.params.issueId}
                 issueId={routeProps.match.params.issueId}
                 project={project}
                 projectUsers={project.users}
