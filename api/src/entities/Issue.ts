@@ -49,6 +49,10 @@ class Issue extends BaseEntity {
   @Column('varchar')
   status: IssueStatus;
 
+  // Reason captured when the issue is moved to the board's "done" column.
+  @Column('text', { nullable: true })
+  resolution: string | null;
+
   @Column('varchar')
   priority: IssuePriority;
 
