@@ -64,6 +64,11 @@ export const complete = catchErrors(async (req, res) => {
     'UPDATE issue SET "sprintId" = NULL WHERE "sprintId" = $1 AND status != $2',
     [sprintId, doneKey],
   );
-  const sprint = await updateEntity(Sprint, sprintId, { status: 'completed' });
+  // Stamp the actual completion date so the sprint's end date is recorded
+  // (the "period" shown in the UI otherwise had no end timestamp).
+  const sprint = await updateEntity(Sprint, sprintId, {
+    status: 'completed',
+    endDate: new Date(),
+  });
   res.respond({ sprint });
 });

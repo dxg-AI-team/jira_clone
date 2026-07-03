@@ -41,3 +41,9 @@ export const Size = styled.div`
 export const HiddenInput = styled.input`
   display: none;
 `;
+
+export const Hint = styled.div`
+  margin-top: 4px;
+  ${font.size(12.5)}
+  color: ${color.textMedium};
+`;

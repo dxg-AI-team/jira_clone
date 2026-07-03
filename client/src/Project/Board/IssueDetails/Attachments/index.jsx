@@ -6,12 +6,14 @@ import toast from 'shared/utils/toast';
 import { Button, Icon } from 'shared/components';
 
 import { SectionTitle } from '../Styles';
-import { List, Row, Name, Size, HiddenInput } from './Styles';
+import { List, Row, Name, Size, HiddenInput, Hint } from './Styles';
 
 const propTypes = {
   issue: PropTypes.object.isRequired,
   fetchIssue: PropTypes.func.isRequired,
 };
+
+const MAX_MB = 10;
 
 const formatSize = bytes => {
   if (bytes < 1024) return `${bytes} B`;
@@ -36,8 +38,8 @@ const Attachments = ({ issue, fetchIssue }) => {
   const handleSelectFile = async event => {
     const file = event.target.files[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('ファイルサイズは10MBまでです。');
+    if (file.size > MAX_MB * 1024 * 1024) {
+      toast.error(`ファイルサイズは${MAX_MB}MBまでです。`);
       return;
     }
     setWorking(true);
@@ -115,6 +117,7 @@ const Attachments = ({ issue, fetchIssue }) => {
       >
         ファイルを添付
       </Button>
+      <Hint>1ファイルあたり最大 {MAX_MB}MB までアップロードできます。</Hint>
     </Fragment>
   );
 };
