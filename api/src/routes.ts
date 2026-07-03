@@ -53,6 +53,7 @@ export const attachPrivateRoutes = (app: any): void => {
 
   app.get('/saved-filters', savedFilters.getMyFilters);
   app.post('/saved-filters', savedFilters.create);
+  app.put('/saved-filters/:filterId', savedFilters.update);
   app.delete('/saved-filters/:filterId', savedFilters.remove);
 
   app.get('/search', search.searchIssues);

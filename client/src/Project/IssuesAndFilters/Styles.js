@@ -60,12 +60,12 @@ export const Chip = styled.div`
   height: 28px;
   padding: 0 4px 0 11px;
   border-radius: 14px;
-  background: ${color.backgroundMedium};
+  background: ${props => (props.isActive ? color.primary : color.backgroundMedium)};
   ${font.size(13)}
-  color: ${color.textDark};
+  color: ${props => (props.isActive ? '#fff' : color.textDark)};
   cursor: pointer;
   &:hover {
-    background: ${color.backgroundLight};
+    background: ${props => (props.isActive ? color.primary : color.backgroundLight)};
   }
 `;
 

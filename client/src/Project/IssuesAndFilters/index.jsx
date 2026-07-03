@@ -19,6 +19,7 @@ import {
   Select,
   Avatar,
   Button,
+  ConfirmModal,
   IssueTypeIcon,
   IssuePriorityIcon,
 } from 'shared/components';
@@ -73,6 +74,14 @@ const sortOptions = [
 
 const toOptions = (values, copy) => values.map(value => ({ value, label: copy[value] }));
 
+const safeParse = raw => {
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    return null;
+  }
+};
+
 const propTypes = {
   project: PropTypes.object.isRequired,
 };
@@ -81,16 +90,35 @@ const ProjectIssuesAndFilters = ({ project }) => {
   const history = useHistory();
   const [filters, mergeFilters] = useMergeState(defaultFilters);
   const [filterName, setFilterName] = useState('');
+  // The saved filter currently applied, and the one pending deletion (confirm).
+  const [activeFilterId, setActiveFilterId] = useState(null);
 
   const [{ data: filtersData }, fetchSavedFilters] = useApi.get('/saved-filters');
   const savedFilters = (filtersData && filtersData.savedFilters) || [];
 
+  const activeFilter = savedFilters.find(f => f.id === activeFilterId) || null;
+  // The applied saved filter has unsaved edits when the current criteria no
+  // longer matches what was stored — enables the "更新" (overwrite) action.
+  const activeFilterEdited =
+    activeFilter &&
+    JSON.stringify({ ...defaultFilters, ...safeParse(activeFilter.criteria) }) !==
+      JSON.stringify(filters);
+
   const applyFilter = savedFilter => {
-    try {
-      mergeFilters({ ...defaultFilters, ...JSON.parse(savedFilter.criteria) });
-    } catch (error) {
+    const criteria = safeParse(savedFilter.criteria);
+    if (!criteria) {
       toast.error('フィルターの読み込みに失敗しました。');
+      return;
     }
+    mergeFilters({ ...defaultFilters, ...criteria });
+    setActiveFilterId(savedFilter.id);
+  };
+
+  // Clearing the criteria only deselects the applied filter — it never deletes
+  // the saved filter.
+  const clearFilters = () => {
+    mergeFilters(defaultFilters);
+    setActiveFilterId(null);
   };
 
   const saveFilter = async () => {
@@ -99,8 +127,12 @@ const ProjectIssuesAndFilters = ({ project }) => {
       return;
     }
     try {
-      await api.post('/saved-filters', { name: filterName.trim(), criteria: filters });
+      const { savedFilter } = await api.post('/saved-filters', {
+        name: filterName.trim(),
+        criteria: filters,
+      });
       setFilterName('');
+      setActiveFilterId(savedFilter.id);
       await fetchSavedFilters();
       toast.success('フィルターを保存しました。');
     } catch (error) {
@@ -108,11 +140,24 @@ const ProjectIssuesAndFilters = ({ project }) => {
     }
   };
 
-  const deleteFilter = async (event, filterId) => {
-    event.stopPropagation();
+  // Overwrite the applied filter's stored criteria with the current selection.
+  const updateActiveFilter = async () => {
+    if (!activeFilter) return;
+    try {
+      await api.put(`/saved-filters/${activeFilter.id}`, { criteria: filters });
+      await fetchSavedFilters();
+      toast.success(`フィルター「${activeFilter.name}」を更新しました。`);
+    } catch (error) {
+      toast.error(error);
+    }
+  };
+
+  const deleteFilter = async filterId => {
     try {
       await api.delete(`/saved-filters/${filterId}`);
+      if (activeFilterId === filterId) setActiveFilterId(null);
       await fetchSavedFilters();
+      toast.success('フィルターを削除しました。');
     } catch (error) {
       toast.error(error);
     }
@@ -214,9 +259,7 @@ const ProjectIssuesAndFilters = ({ project }) => {
             onChange={sort => mergeFilters({ sort })}
           />
         </FilterItem>
-        {isFiltered && (
-          <ClearButton onClick={() => mergeFilters(defaultFilters)}>クリア</ClearButton>
-        )}
+        {isFiltered && <ClearButton onClick={clearFilters}>クリア</ClearButton>}
       </FilterBar>
 
       <SavedBar>
@@ -225,13 +268,36 @@ const ProjectIssuesAndFilters = ({ project }) => {
           <SavedLabel>なし</SavedLabel>
         ) : (
           savedFilters.map(savedFilter => (
-            <Chip key={savedFilter.id} onClick={() => applyFilter(savedFilter)}>
+            <Chip
+              key={savedFilter.id}
+              isActive={savedFilter.id === activeFilterId}
+              onClick={() => applyFilter(savedFilter)}
+            >
               {savedFilter.name}
-              <ChipDelete title="削除" onClick={event => deleteFilter(event, savedFilter.id)}>
-                ×
-              </ChipDelete>
+              <ConfirmModal
+                title={`フィルター「${savedFilter.name}」を削除しますか？`}
+                message="削除すると元に戻せません。適用を解除するだけなら「クリア」を使用してください。"
+                confirmText="削除"
+                onConfirm={() => deleteFilter(savedFilter.id)}
+                renderLink={modal => (
+                  <ChipDelete
+                    title="削除"
+                    onClick={event => {
+                      event.stopPropagation();
+                      modal.open();
+                    }}
+                  >
+                    ×
+                  </ChipDelete>
+                )}
+              />
             </Chip>
           ))
+        )}
+        {activeFilterEdited && (
+          <Button variant="primary" onClick={updateActiveFilter}>
+            「{activeFilter.name}」を更新
+          </Button>
         )}
         <SaveBox>
           <SaveInput
