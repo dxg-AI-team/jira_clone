@@ -113,6 +113,56 @@ export const FilterItem = styled.div`
   min-width: 150px;
 `;
 
+export const ModeTabs = styled.div`
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid ${color.borderLightest};
+`;
+
+export const ModeTab = styled.div`
+  padding: 8px 14px;
+  cursor: pointer;
+  ${font.medium}
+  ${font.size(14.5)}
+  color: ${props => (props.isActive ? color.primary : color.textMedium)};
+  border-bottom: 2px solid ${props => (props.isActive ? color.primary : 'transparent')};
+  &:hover {
+    color: ${color.textDark};
+  }
+`;
+
+export const JqlBar = styled.div`
+  margin-bottom: 18px;
+`;
+
+export const JqlInput = styled.input`
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid ${props => (props.invalid ? '#e13c3c' : color.borderLight)};
+  border-radius: 4px;
+  ${font.size(14.5)}
+  font-family: monospace;
+  color: ${color.textDarkest};
+  &:focus {
+    outline: none;
+    border-color: ${props => (props.invalid ? '#e13c3c' : color.borderInputFocus)};
+  }
+`;
+
+export const JqlHint = styled.div`
+  margin-top: 6px;
+  ${font.size(12.5)}
+  color: ${color.textMedium};
+`;
+
+export const JqlError = styled.div`
+  margin-top: 6px;
+  ${font.size(13)}
+  color: #e13c3c;
+`;
+
 export const DateRange = styled.div`
   display: flex;
   align-items: center;

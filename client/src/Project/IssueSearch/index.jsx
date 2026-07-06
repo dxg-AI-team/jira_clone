@@ -1,6 +1,6 @@
 import React, { Fragment, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { get } from 'lodash';
 
 import useApi from 'shared/hooks/api';
@@ -31,6 +31,7 @@ const propTypes = {
 };
 
 const ProjectIssueSearch = ({ project }) => {
+  const history = useHistory();
   const [isSearchTermEmpty, setIsSearchTermEmpty] = useState(true);
 
   // Global search spans every board in the user's spaces.
@@ -50,13 +51,29 @@ const ProjectIssueSearch = ({ project }) => {
     }
   };
 
+  // Typing an exact issue key (e.g. "ABC-1") and pressing Enter jumps straight
+  // to that issue, like JIRA's quick search.
+  const handleKeyDown = event => {
+    if (event.key !== 'Enter') return;
+    const term = event.target.value.trim();
+    if (!term) return;
+    const match = matchingIssues.find(issue => {
+      const key = formatIssueKey(issue.boardKey, issue.number);
+      return key && key.toLowerCase() === term.toLowerCase();
+    });
+    if (match) {
+      history.push(`/project/${match.projectId}/board/issues/${match.id}`);
+    }
+  };
+
   return (
     <IssueSearch>
       <SearchInputCont>
         <SearchInputDebounced
           autoFocus
-          placeholder="概要・説明で課題を検索..."
+          placeholder="概要・説明・キー（ABC-1）で検索。キー入力で Enter を押すと直接開きます"
           onChange={handleSearchChange}
+          onKeyDown={handleKeyDown}
         />
         <SearchIcon type="search" size={22} />
         {isLoading && <SearchSpinner />}

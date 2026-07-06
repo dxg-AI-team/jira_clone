@@ -13,7 +13,9 @@ import {
   IssuePriorityCopy,
 } from 'shared/constants/issues';
 import { getColumns, getColumnName, columnColorForKey } from 'shared/utils/workflow';
+import { runJql } from 'shared/utils/jql';
 import useMergeState from 'shared/hooks/mergeState';
+import useCurrentUser from 'shared/hooks/currentUser';
 import {
   InputDebounced,
   Select,
@@ -29,6 +31,12 @@ import {
   Header,
   Title,
   ResultCount,
+  ModeTabs,
+  ModeTab,
+  JqlBar,
+  JqlInput,
+  JqlHint,
+  JqlError,
   FilterBar,
   SearchBox,
   FilterItem,
@@ -97,8 +105,12 @@ const propTypes = {
 
 const ProjectIssuesAndFilters = ({ project }) => {
   const history = useHistory();
+  const { currentUser } = useCurrentUser();
   const [filters, mergeFilters] = useMergeState(defaultFilters);
   const [filterName, setFilterName] = useState('');
+  // 'basic' = field filters, 'jql' = advanced JQL query.
+  const [mode, setMode] = useState('basic');
+  const [jqlText, setJqlText] = useState('');
   // The saved filter currently applied, and the one pending deletion (confirm).
   const [activeFilterId, setActiveFilterId] = useState(null);
 
@@ -172,7 +184,16 @@ const ProjectIssuesAndFilters = ({ project }) => {
     }
   };
 
-  const issues = filterAndSortIssues(project.issues || [], filters);
+  const jqlCtx = {
+    currentUserId: currentUser ? currentUser.id : null,
+    users: project.users || [],
+    columns: getColumns(project),
+    sprints: project.sprints || [],
+    projectKey: project.key,
+  };
+  const jqlResult = mode === 'jql' ? runJql(project.issues || [], jqlText, jqlCtx) : null;
+  const issues =
+    mode === 'jql' ? jqlResult.issues || [] : filterAndSortIssues(project.issues || [], filters);
 
   const versionName = versionId => {
     const version = (project.versions || []).find(v => v.id === versionId);
@@ -206,176 +227,206 @@ const ProjectIssuesAndFilters = ({ project }) => {
         <ResultCount>{issues.length} 件の課題</ResultCount>
       </Header>
 
-      <FilterBar>
-        <SearchBox>
-          <InputDebounced
-            icon="search"
-            placeholder="概要・説明で検索"
-            value={filters.searchTerm}
-            onChange={searchTerm => mergeFilters({ searchTerm })}
-          />
-        </SearchBox>
-        <FilterItem>
-          <Select
-            isMulti
-            placeholder="種別"
-            value={filters.types}
-            options={toOptions(Object.values(IssueType), IssueTypeCopy)}
-            onChange={types => mergeFilters({ types })}
-          />
-        </FilterItem>
-        <FilterItem>
-          <Select
-            isMulti
-            placeholder="ステータス"
-            value={filters.statuses}
-            options={getColumns(project).map(c => ({ value: c.key, label: c.name }))}
-            onChange={statuses => mergeFilters({ statuses })}
-          />
-        </FilterItem>
-        <FilterItem>
-          <Select
-            isMulti
-            placeholder="優先度"
-            value={filters.priorities}
-            options={toOptions(Object.values(IssuePriority), IssuePriorityCopy)}
-            onChange={priorities => mergeFilters({ priorities })}
-          />
-        </FilterItem>
-        <FilterItem>
-          <Select
-            isMulti
-            placeholder="担当者"
-            value={filters.userIds}
-            options={(project.users || []).map(user => ({ value: user.id, label: user.name }))}
-            onChange={userIds => mergeFilters({ userIds })}
-          />
-        </FilterItem>
-        <FilterItem>
-          <Select
-            placeholder="報告者"
-            value={filters.reporterId || undefined}
-            options={(project.users || []).map(user => ({ value: user.id, label: user.name }))}
-            onChange={reporterId => mergeFilters({ reporterId: reporterId || null })}
-          />
-        </FilterItem>
-        {allLabels.length > 0 && (
-          <FilterItem>
-            <Select
-              isMulti
-              placeholder="ラベル"
-              value={filters.labels}
-              options={allLabels.map(label => ({ value: label, label }))}
-              onChange={labels => mergeFilters({ labels })}
-            />
-          </FilterItem>
-        )}
-        <FilterItem>
-          <Select
-            placeholder="リリース"
-            value={filters.versionId || undefined}
-            options={(project.versions || []).map(v => ({ value: v.id, label: v.name }))}
-            onChange={versionId => mergeFilters({ versionId: versionId || null })}
-          />
-        </FilterItem>
-        <FilterItem>
-          <Select
-            isMulti
-            placeholder="コンポーネント"
-            value={filters.componentIds}
-            options={(project.components || []).map(c => ({ value: c.id, label: c.name }))}
-            onChange={componentIds => mergeFilters({ componentIds })}
-          />
-        </FilterItem>
-        {(project.sprints || []).length > 0 && (
-          <FilterItem>
-            <Select
-              placeholder="スプリント"
-              value={filters.sprintId || undefined}
-              options={[
-                { value: 'none', label: 'スプリントなし' },
-                ...(project.sprints || []).map(s => ({ value: s.id, label: s.name })),
-              ]}
-              onChange={sprintId => mergeFilters({ sprintId: sprintId || null })}
-            />
-          </FilterItem>
-        )}
-        <DateRange>
-          <DateLabel>作成日</DateLabel>
-          <DateInput
-            type="date"
-            value={filters.createdFrom}
-            max={filters.createdTo || undefined}
-            onChange={e => mergeFilters({ createdFrom: e.target.value })}
-          />
-          <DateSep>〜</DateSep>
-          <DateInput
-            type="date"
-            value={filters.createdTo}
-            min={filters.createdFrom || undefined}
-            onChange={e => mergeFilters({ createdTo: e.target.value })}
-          />
-        </DateRange>
-        <FilterItem>
-          <Select
-            withClearValue={false}
-            value={filters.sort}
-            options={sortOptions}
-            onChange={sort => mergeFilters({ sort })}
-          />
-        </FilterItem>
-        {isFiltered && <ClearButton onClick={clearFilters}>クリア</ClearButton>}
-      </FilterBar>
+      <ModeTabs>
+        <ModeTab isActive={mode === 'basic'} onClick={() => setMode('basic')}>
+          ベーシック検索
+        </ModeTab>
+        <ModeTab isActive={mode === 'jql'} onClick={() => setMode('jql')}>
+          詳細検索 (JQL)
+        </ModeTab>
+      </ModeTabs>
 
-      <SavedBar>
-        <SavedLabel>保存済みフィルター:</SavedLabel>
-        {savedFilters.length === 0 ? (
-          <SavedLabel>なし</SavedLabel>
-        ) : (
-          savedFilters.map(savedFilter => (
-            <Chip
-              key={savedFilter.id}
-              isActive={savedFilter.id === activeFilterId}
-              onClick={() => applyFilter(savedFilter)}
-            >
-              {savedFilter.name}
-              <ConfirmModal
-                title={`フィルター「${savedFilter.name}」を削除しますか？`}
-                message="削除すると元に戻せません。適用を解除するだけなら「クリア」を使用してください。"
-                confirmText="削除"
-                onConfirm={() => deleteFilter(savedFilter.id)}
-                renderLink={modal => (
-                  <ChipDelete
-                    title="削除"
-                    onClick={event => {
-                      event.stopPropagation();
-                      modal.open();
-                    }}
-                  >
-                    ×
-                  </ChipDelete>
-                )}
-              />
-            </Chip>
-          ))
-        )}
-        {activeFilterEdited && (
-          <Button variant="primary" onClick={updateActiveFilter}>
-            「{activeFilter.name}」を更新
-          </Button>
-        )}
-        <SaveBox>
-          <SaveInput
-            placeholder="現在の条件を保存..."
-            value={filterName}
-            onChange={event => setFilterName(event.target.value)}
-            onKeyDown={event => event.key === 'Enter' && saveFilter()}
+      {mode === 'jql' && (
+        <JqlBar>
+          <JqlInput
+            placeholder="例: status != 完了 AND assignee = currentUser() ORDER BY created DESC"
+            value={jqlText}
+            onChange={e => setJqlText(e.target.value)}
+            invalid={!!(jqlResult && jqlResult.error)}
           />
-          <Button variant="primary" onClick={saveFilter}>
-            保存
-          </Button>
-        </SaveBox>
-      </SavedBar>
+          <JqlHint>
+            フィールド: summary, status, type, priority, assignee, reporter, labels, sprint,
+            created, updated, key ／ 演算子: {'= != > >= < <= ~ IN'} ／ 論理: AND OR NOT ／ 関数:
+            currentUser() ／ 並び替え: ORDER BY field [ASC|DESC]
+          </JqlHint>
+          {jqlResult && jqlResult.error && <JqlError>エラー: {jqlResult.error}</JqlError>}
+        </JqlBar>
+      )}
+
+      {mode === 'basic' && (
+        <React.Fragment>
+          <FilterBar>
+            <SearchBox>
+              <InputDebounced
+                icon="search"
+                placeholder="概要・説明で検索"
+                value={filters.searchTerm}
+                onChange={searchTerm => mergeFilters({ searchTerm })}
+              />
+            </SearchBox>
+            <FilterItem>
+              <Select
+                isMulti
+                placeholder="種別"
+                value={filters.types}
+                options={toOptions(Object.values(IssueType), IssueTypeCopy)}
+                onChange={types => mergeFilters({ types })}
+              />
+            </FilterItem>
+            <FilterItem>
+              <Select
+                isMulti
+                placeholder="ステータス"
+                value={filters.statuses}
+                options={getColumns(project).map(c => ({ value: c.key, label: c.name }))}
+                onChange={statuses => mergeFilters({ statuses })}
+              />
+            </FilterItem>
+            <FilterItem>
+              <Select
+                isMulti
+                placeholder="優先度"
+                value={filters.priorities}
+                options={toOptions(Object.values(IssuePriority), IssuePriorityCopy)}
+                onChange={priorities => mergeFilters({ priorities })}
+              />
+            </FilterItem>
+            <FilterItem>
+              <Select
+                isMulti
+                placeholder="担当者"
+                value={filters.userIds}
+                options={(project.users || []).map(user => ({ value: user.id, label: user.name }))}
+                onChange={userIds => mergeFilters({ userIds })}
+              />
+            </FilterItem>
+            <FilterItem>
+              <Select
+                placeholder="報告者"
+                value={filters.reporterId || undefined}
+                options={(project.users || []).map(user => ({ value: user.id, label: user.name }))}
+                onChange={reporterId => mergeFilters({ reporterId: reporterId || null })}
+              />
+            </FilterItem>
+            {allLabels.length > 0 && (
+              <FilterItem>
+                <Select
+                  isMulti
+                  placeholder="ラベル"
+                  value={filters.labels}
+                  options={allLabels.map(label => ({ value: label, label }))}
+                  onChange={labels => mergeFilters({ labels })}
+                />
+              </FilterItem>
+            )}
+            <FilterItem>
+              <Select
+                placeholder="リリース"
+                value={filters.versionId || undefined}
+                options={(project.versions || []).map(v => ({ value: v.id, label: v.name }))}
+                onChange={versionId => mergeFilters({ versionId: versionId || null })}
+              />
+            </FilterItem>
+            <FilterItem>
+              <Select
+                isMulti
+                placeholder="コンポーネント"
+                value={filters.componentIds}
+                options={(project.components || []).map(c => ({ value: c.id, label: c.name }))}
+                onChange={componentIds => mergeFilters({ componentIds })}
+              />
+            </FilterItem>
+            {(project.sprints || []).length > 0 && (
+              <FilterItem>
+                <Select
+                  placeholder="スプリント"
+                  value={filters.sprintId || undefined}
+                  options={[
+                    { value: 'none', label: 'スプリントなし' },
+                    ...(project.sprints || []).map(s => ({ value: s.id, label: s.name })),
+                  ]}
+                  onChange={sprintId => mergeFilters({ sprintId: sprintId || null })}
+                />
+              </FilterItem>
+            )}
+            <DateRange>
+              <DateLabel>作成日</DateLabel>
+              <DateInput
+                type="date"
+                value={filters.createdFrom}
+                max={filters.createdTo || undefined}
+                onChange={e => mergeFilters({ createdFrom: e.target.value })}
+              />
+              <DateSep>〜</DateSep>
+              <DateInput
+                type="date"
+                value={filters.createdTo}
+                min={filters.createdFrom || undefined}
+                onChange={e => mergeFilters({ createdTo: e.target.value })}
+              />
+            </DateRange>
+            <FilterItem>
+              <Select
+                withClearValue={false}
+                value={filters.sort}
+                options={sortOptions}
+                onChange={sort => mergeFilters({ sort })}
+              />
+            </FilterItem>
+            {isFiltered && <ClearButton onClick={clearFilters}>クリア</ClearButton>}
+          </FilterBar>
+
+          <SavedBar>
+            <SavedLabel>保存済みフィルター:</SavedLabel>
+            {savedFilters.length === 0 ? (
+              <SavedLabel>なし</SavedLabel>
+            ) : (
+              savedFilters.map(savedFilter => (
+                <Chip
+                  key={savedFilter.id}
+                  isActive={savedFilter.id === activeFilterId}
+                  onClick={() => applyFilter(savedFilter)}
+                >
+                  {savedFilter.name}
+                  <ConfirmModal
+                    title={`フィルター「${savedFilter.name}」を削除しますか？`}
+                    message="削除すると元に戻せません。適用を解除するだけなら「クリア」を使用してください。"
+                    confirmText="削除"
+                    onConfirm={() => deleteFilter(savedFilter.id)}
+                    renderLink={modal => (
+                      <ChipDelete
+                        title="削除"
+                        onClick={event => {
+                          event.stopPropagation();
+                          modal.open();
+                        }}
+                      >
+                        ×
+                      </ChipDelete>
+                    )}
+                  />
+                </Chip>
+              ))
+            )}
+            {activeFilterEdited && (
+              <Button variant="primary" onClick={updateActiveFilter}>
+                「{activeFilter.name}」を更新
+              </Button>
+            )}
+            <SaveBox>
+              <SaveInput
+                placeholder="現在の条件を保存..."
+                value={filterName}
+                onChange={event => setFilterName(event.target.value)}
+                onKeyDown={event => event.key === 'Enter' && saveFilter()}
+              />
+              <Button variant="primary" onClick={saveFilter}>
+                保存
+              </Button>
+            </SaveBox>
+          </SavedBar>
+        </React.Fragment>
+      )}
 
       {issues.length === 0 ? (
         <Empty>条件に一致する課題がありません。</Empty>
