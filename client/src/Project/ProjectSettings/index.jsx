@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useFormikContext } from 'formik';
 
 import { ProjectCategory, ProjectCategoryCopy } from 'shared/constants/projects';
-import { getColumns } from 'shared/utils/workflow';
+import { getColumns, getTransitions } from 'shared/utils/workflow';
 import { normalizeKey, isValidKey } from 'shared/utils/projectKey';
 import api from 'shared/utils/api';
 import toast from 'shared/utils/toast';
@@ -27,6 +27,13 @@ import {
   WipInput,
   RowActions,
   AddColumnButton,
+  TransitionSection,
+  TransitionHeading,
+  TransitionToggle,
+  TransitionTableWrap,
+  TransitionTable,
+  TransitionCorner,
+  TransitionSelf,
 } from './Styles';
 
 let columnSeq = 0;
@@ -82,6 +89,27 @@ const WorkflowSettings = ({ project, fetchProject }) => {
   );
   const [isWorking, setWorking] = useState(false);
 
+  // Transition rules: when enabled, only the checked (from→to) moves are allowed.
+  // `allowed[from]` lists permitted targets; a missing entry means every target
+  // is allowed (the default the first time restrictions are switched on).
+  const initialTransitions = getTransitions(project);
+  const [restricted, setRestricted] = useState(!!initialTransitions);
+  const [allowed, setAllowed] = useState(() => initialTransitions || {});
+
+  const isAllowed = (from, to) => {
+    if (from === to) return true;
+    const list = allowed[from];
+    if (!list) return true;
+    return list.includes(to);
+  };
+
+  const toggleAllowed = (from, to) =>
+    setAllowed(prev => {
+      const current = prev[from] || rows.map(r => r.key).filter(k => k !== from);
+      const nextList = current.includes(to) ? current.filter(k => k !== to) : [...current, to];
+      return { ...prev, [from]: nextList };
+    });
+
   const updateRow = (key, field, value) =>
     setRows(prev => prev.map(row => (row.key === key ? { ...row, [field]: value } : row)));
 
@@ -110,11 +138,21 @@ const WorkflowSettings = ({ project, fetchProject }) => {
     }
     setWorking(true);
     try {
-      const config = cleaned.map(row => ({
-        key: row.key,
-        name: row.name,
-        wipLimit: row.wipLimit ? Number(row.wipLimit) : undefined,
-      }));
+      const config = {
+        columns: cleaned.map(row => ({
+          key: row.key,
+          name: row.name,
+          wipLimit: row.wipLimit ? Number(row.wipLimit) : undefined,
+        })),
+      };
+      if (restricted) {
+        const keys = cleaned.map(row => row.key);
+        const transitions = {};
+        keys.forEach(from => {
+          transitions[from] = keys.filter(to => to !== from && isAllowed(from, to));
+        });
+        config.transitions = transitions;
+      }
       await api.put('/project', { workflow: JSON.stringify(config) });
       await fetchProject();
       toast.success('ワークフローを保存しました。');
@@ -175,6 +213,58 @@ const WorkflowSettings = ({ project, fetchProject }) => {
           <Icon type="plus" size={18} />
           列を追加
         </AddColumnButton>
+
+        <TransitionSection>
+          <TransitionHeading>ステータス遷移ルール</TransitionHeading>
+          <WorkflowHint>
+            有効にすると、許可した遷移だけがボードのドラッグ＆ドロップと課題のステータス変更で行えます。
+            表の<b>行が「変更前」、列が「変更後」</b>
+            のステータスです（無効の場合は自由に変更できます）。
+          </WorkflowHint>
+          <TransitionToggle>
+            <input
+              type="checkbox"
+              checked={restricted}
+              onChange={event => setRestricted(event.target.checked)}
+            />
+            ステータス遷移ルールを有効にする
+          </TransitionToggle>
+          {restricted && (
+            <TransitionTableWrap>
+              <TransitionTable>
+                <thead>
+                  <tr>
+                    <TransitionCorner>変更前 \ 変更後</TransitionCorner>
+                    {rows.map(col => (
+                      <th key={col.key}>{col.name || '(未設定)'}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(fromRow => (
+                    <tr key={fromRow.key}>
+                      <th>{fromRow.name || '(未設定)'}</th>
+                      {rows.map(toCol =>
+                        fromRow.key === toCol.key ? (
+                          <TransitionSelf key={toCol.key}>—</TransitionSelf>
+                        ) : (
+                          <td key={toCol.key}>
+                            <input
+                              type="checkbox"
+                              checked={isAllowed(fromRow.key, toCol.key)}
+                              onChange={() => toggleAllowed(fromRow.key, toCol.key)}
+                            />
+                          </td>
+                        ),
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </TransitionTable>
+            </TransitionTableWrap>
+          )}
+        </TransitionSection>
+
         <ActionButton variant="primary" isWorking={isWorking} onClick={save}>
           ワークフローを保存
         </ActionButton>

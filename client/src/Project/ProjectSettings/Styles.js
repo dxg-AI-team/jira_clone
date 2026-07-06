@@ -127,3 +127,71 @@ export const AddColumnButton = styled.div`
     text-decoration: underline;
   }
 `;
+
+export const TransitionSection = styled.div`
+  margin-top: 34px;
+  padding-top: 26px;
+  border-top: 1px solid ${color.borderLightest};
+`;
+
+export const TransitionHeading = styled.h2`
+  padding-bottom: 8px;
+  ${font.size(18)}
+  ${font.medium}
+`;
+
+export const TransitionToggle = styled.label`
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  ${font.size(14.5)}
+  ${font.medium}
+  color: ${color.textDark};
+  input {
+    margin-right: 8px;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+  }
+`;
+
+export const TransitionTableWrap = styled.div`
+  margin-top: 16px;
+  overflow-x: auto;
+`;
+
+export const TransitionTable = styled.table`
+  border-collapse: collapse;
+  ${font.size(13)}
+  th,
+  td {
+    border: 1px solid ${color.borderLight};
+    padding: 7px 10px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  thead th,
+  tbody th {
+    ${font.medium}
+    color: ${color.textMedium};
+    background: ${color.backgroundLightest};
+  }
+  tbody th {
+    text-align: left;
+  }
+  input {
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+  }
+`;
+
+export const TransitionCorner = styled.th`
+  ${font.size(11.5)}
+  color: ${color.textLight} !important;
+`;
+
+export const TransitionSelf = styled.td`
+  background: ${color.backgroundLight};
+  color: ${color.textLight};
+`;

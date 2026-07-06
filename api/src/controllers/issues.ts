@@ -1,11 +1,11 @@
 import { pick } from 'lodash';
 
 import { Issue, IssueLink, Attachment, ActivityLog, Project } from 'entities';
-import { catchErrors } from 'errors';
+import { catchErrors, BadUserInputError } from 'errors';
 import { updateEntity, deleteEntity, createEntity, findEntityOrThrow } from 'utils/typeorm';
 import { notify } from 'utils/notifications';
 import { logActivity } from 'utils/activity';
-import { getColumnName } from 'utils/workflow';
+import { getColumnName, isTransitionAllowed } from 'utils/workflow';
 
 export const getProjectIssues = catchErrors(async (req, res) => {
   const { projectId } = req;
@@ -106,6 +106,23 @@ export const update = catchErrors(async (req, res) => {
   const oldStatus = before.status;
   const watcherIds = (before.watchers || []).map(w => w.id);
 
+  // Enforce the board's workflow transition rules on any status change.
+  const isStatusChange = req.body.status && req.body.status !== oldStatus;
+  let project: Project | undefined;
+  if (isStatusChange) {
+    project = await findEntityOrThrow(Project, before.projectId);
+    if (!isTransitionAllowed(project, oldStatus, req.body.status)) {
+      throw new BadUserInputError({
+        fields: {
+          status: `「${getColumnName(project, oldStatus)}」から「${getColumnName(
+            project,
+            req.body.status,
+          )}」へのステータス遷移は許可されていません。`,
+        },
+      });
+    }
+  }
+
   const issue = await updateEntity(Issue, req.params.issueId, req.body);
 
   const actorId = req.currentUser.id;
@@ -131,8 +148,7 @@ export const update = catchErrors(async (req, res) => {
   }
 
   // Status change → watchers and assignees.
-  if (req.body.status && req.body.status !== oldStatus) {
-    const project = await findEntityOrThrow(Project, issue.projectId);
+  if (isStatusChange && project) {
     const newLabel = getColumnName(project, issue.status);
     const oldLabel = getColumnName(project, oldStatus);
     const recipients = Array.from(new Set([...watcherIds, ...(issue.userIds || [])]));

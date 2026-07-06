@@ -1,4 +1,13 @@
-import { getColumns, getDoneKey, getBacklogKey, getColumnName, columnColor } from './workflow';
+import {
+  getColumns,
+  getDoneKey,
+  getBacklogKey,
+  getColumnName,
+  columnColor,
+  getTransitions,
+  isTransitionAllowed,
+  getAllowedTargets,
+} from './workflow';
 
 describe('getColumns', () => {
   it('returns the default 4 columns when no workflow is configured', () => {
@@ -27,6 +36,55 @@ describe('getColumns', () => {
   it('falls back to defaults for malformed or empty workflow', () => {
     expect(getColumns({ workflow: 'not json' }).length).toBe(4);
     expect(getColumns({ workflow: '[]' }).length).toBe(4);
+  });
+
+  it('parses the object shape { columns, transitions }', () => {
+    const project = {
+      workflow: JSON.stringify({
+        columns: [
+          { key: 'todo', name: 'ToDo' },
+          { key: 'done', name: 'Done' },
+        ],
+        transitions: { todo: ['done'], done: [] },
+      }),
+    };
+    expect(getColumns(project).map(c => c.key)).toEqual(['todo', 'done']);
+  });
+});
+
+describe('transition rules', () => {
+  const restricted = {
+    workflow: JSON.stringify({
+      columns: [
+        { key: 'todo', name: 'ToDo' },
+        { key: 'doing', name: 'Doing' },
+        { key: 'done', name: 'Done' },
+      ],
+      transitions: { todo: ['doing'], doing: ['todo', 'done'], done: [] },
+    }),
+  };
+
+  it('treats a missing/legacy workflow as unrestricted', () => {
+    expect(getTransitions({})).toBe(null);
+    expect(getTransitions({ workflow: JSON.stringify([{ key: 'a', name: 'A' }]) })).toBe(null);
+    expect(isTransitionAllowed({}, 'a', 'b')).toBe(true);
+  });
+
+  it('allows only the configured transitions', () => {
+    expect(isTransitionAllowed(restricted, 'todo', 'doing')).toBe(true);
+    expect(isTransitionAllowed(restricted, 'todo', 'done')).toBe(false);
+    expect(isTransitionAllowed(restricted, 'doing', 'done')).toBe(true);
+    expect(isTransitionAllowed(restricted, 'done', 'todo')).toBe(false);
+  });
+
+  it('always allows a no-op transition to the same status', () => {
+    expect(isTransitionAllowed(restricted, 'done', 'done')).toBe(true);
+  });
+
+  it('getAllowedTargets includes the current status plus permitted targets', () => {
+    expect(getAllowedTargets(restricted, 'doing')).toEqual(['todo', 'doing', 'done']);
+    expect(getAllowedTargets(restricted, 'done')).toEqual(['done']);
+    expect(getAllowedTargets(restricted, 'todo')).toEqual(['todo', 'doing']);
   });
 });
 

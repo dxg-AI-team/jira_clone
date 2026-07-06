@@ -4,24 +4,69 @@ import { IssueStatus, IssueStatusCopy } from 'shared/constants/issues';
 export const defaultColumns = () =>
   Object.values(IssueStatus).map(key => ({ key, name: IssueStatusCopy[key], wipLimit: null }));
 
-// Ordered board columns from the project's workflow config, else the defaults.
-// Workflow config shape: [{ key, name, wipLimit }] (ordered left→right).
-export const getColumns = project => {
+const normalizeColumns = config => {
+  if (!Array.isArray(config)) return [];
+  return config
+    .filter(c => c && c.key)
+    .map(c => ({ key: c.key, name: c.name || c.key, wipLimit: Number(c.wipLimit) || null }));
+};
+
+// Transition rules map: { fromKey: [allowedToKey, ...] }. null = unrestricted.
+const normalizeTransitions = transitions => {
+  if (!transitions || typeof transitions !== 'object') return null;
+  const result = {};
+  Object.keys(transitions).forEach(from => {
+    if (Array.isArray(transitions[from])) result[from] = transitions[from].map(String);
+  });
+  return result;
+};
+
+// Parse project.workflow (JSON) into a normalized { columns, transitions }.
+// Backward compatible: workflow may be a bare array of columns (legacy) or an
+// object { columns, transitions }. transitions null/absent = unrestricted.
+const parseWorkflow = project => {
   if (project && project.workflow) {
     try {
       const config = JSON.parse(project.workflow);
       if (Array.isArray(config)) {
-        const cols = config
-          .filter(c => c && c.key)
-          .map(c => ({ key: c.key, name: c.name || c.key, wipLimit: Number(c.wipLimit) || null }));
-        if (cols.length) return cols;
+        return { columns: normalizeColumns(config), transitions: null };
+      }
+      if (config && typeof config === 'object') {
+        return {
+          columns: normalizeColumns(config.columns),
+          transitions: normalizeTransitions(config.transitions),
+        };
       }
     } catch (error) {
       // malformed — fall back to defaults
     }
   }
-  return defaultColumns();
+  return { columns: [], transitions: null };
 };
+
+// Ordered board columns from the project's workflow config, else the defaults.
+export const getColumns = project => {
+  const cols = parseWorkflow(project).columns;
+  return cols.length ? cols : defaultColumns();
+};
+
+// Configured transition rules, or null when transitions are unrestricted.
+export const getTransitions = project => parseWorkflow(project).transitions;
+
+// Whether moving an issue from `fromKey` to `toKey` is permitted. Always true
+// for a no-op (same status) and when no transition rules are configured.
+export const isTransitionAllowed = (project, fromKey, toKey) => {
+  if (fromKey === toKey) return true;
+  const transitions = getTransitions(project);
+  if (!transitions) return true;
+  return (transitions[fromKey] || []).includes(toKey);
+};
+
+// Allowed target statuses from `fromKey` (always includes fromKey itself).
+export const getAllowedTargets = (project, fromKey) =>
+  getColumns(project)
+    .map(c => c.key)
+    .filter(key => isTransitionAllowed(project, fromKey, key));
 
 // Semantics: the first column = "not started", the last column = "done".
 export const getBacklogKey = project => getColumns(project)[0].key;

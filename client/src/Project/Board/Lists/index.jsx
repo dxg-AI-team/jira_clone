@@ -4,8 +4,9 @@ import { DragDropContext } from 'react-beautiful-dnd';
 
 import useCurrentUser from 'shared/hooks/currentUser';
 import api from 'shared/utils/api';
+import toast from 'shared/utils/toast';
 import { moveItemWithinArray, insertItemIntoArray } from 'shared/utils/javascript';
-import { getColumns } from 'shared/utils/workflow';
+import { getColumns, getColumnName, isTransitionAllowed } from 'shared/utils/workflow';
 
 import List from './List';
 import { Lists } from './Styles';
@@ -20,7 +21,21 @@ const ProjectBoardLists = ({ project, filters, updateLocalProjectIssues }) => {
   const { currentUserId } = useCurrentUser();
 
   const handleIssueDrop = ({ draggableId, destination, source }) => {
+    if (!destination) return;
     if (!isPositionChanged(source, destination)) return;
+
+    // Enforce the board's workflow transition rules when moving between columns.
+    const fromStatus = source.droppableId;
+    const toStatus = destination.droppableId;
+    if (!isTransitionAllowed(project, fromStatus, toStatus)) {
+      toast.error(
+        `「${getColumnName(project, fromStatus)}」から「${getColumnName(
+          project,
+          toStatus,
+        )}」へは移動できません。`,
+      );
+      return;
+    }
 
     const issueId = Number(draggableId);
 

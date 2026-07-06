@@ -1,7 +1,13 @@
 import React, { Fragment, useState } from 'react';
 import PropTypes from 'prop-types';
 
-import { getColumns, getColumnName, getDoneKey, columnColorForKey } from 'shared/utils/workflow';
+import {
+  getColumns,
+  getColumnName,
+  getDoneKey,
+  getAllowedTargets,
+  columnColorForKey,
+} from 'shared/utils/workflow';
 import { Select, Icon, Modal, Textarea, Button } from 'shared/components';
 
 import { SectionTitle } from '../Styles';
@@ -24,6 +30,10 @@ const propTypes = {
 const ProjectBoardIssueDetailsStatus = ({ issue, updateIssue, project }) => {
   const doneKey = getDoneKey(project);
   const [pendingReason, setPendingReason] = useState(null);
+
+  // Only offer statuses the workflow permits transitioning to from the current
+  // status (always includes the current status itself).
+  const allowedKeys = getAllowedTargets(project, issue.status);
 
   // Moving an issue into the "done" column opens a prompt for the resolution
   // reason (mirroring JIRA's resolve dialog). Other transitions apply directly.
@@ -53,10 +63,12 @@ const ProjectBoardIssueDetailsStatus = ({ issue, updateIssue, project }) => {
         withClearValue={false}
         name="status"
         value={issue.status}
-        options={getColumns(project).map(column => ({
-          value: column.key,
-          label: column.name,
-        }))}
+        options={getColumns(project)
+          .filter(column => allowedKeys.includes(column.key))
+          .map(column => ({
+            value: column.key,
+            label: column.name,
+          }))}
         onChange={handleChange}
         renderValue={({ value: status }) => (
           <Status isValue bg={columnColorForKey(project, status)}>
