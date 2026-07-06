@@ -230,7 +230,11 @@ const ProjectSettings = ({ project, fetchProject }) => {
         <FormCont>
           <FormElement>
             <Breadcrumbs
-              items={[project.space ? project.space.name : 'スペース', project.name, 'ボード設定']}
+              items={[
+                project.space ? project.space.name : 'プロジェクト',
+                project.name,
+                'ボード設定',
+              ]}
             />
             <FormHeading>ボード設定</FormHeading>
 
@@ -238,7 +242,7 @@ const ProjectSettings = ({ project, fetchProject }) => {
             <Form.Field.Input name="name" label="名前" />
             <Form.Field.Input
               name="key"
-              label="プロジェクトキー"
+              label="ボードキー"
               tip="課題キーの接頭辞になります（例: ABC → ABC-1）。変更すると既存課題のキー表示もすべて更新されます。"
             />
             <IconPicker />

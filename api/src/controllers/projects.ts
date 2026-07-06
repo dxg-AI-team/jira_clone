@@ -25,7 +25,7 @@ const resolveKey = async (
   const existing = await Project.findOne({ where });
   if (existing) {
     throw new BadUserInputError({
-      fields: { key: `キー「${key}」はこのスペースで既に使われています。` },
+      fields: { key: `キー「${key}」はこのプロジェクトで既に使われています。` },
     });
   }
   return key;
@@ -33,7 +33,7 @@ const resolveKey = async (
 
 const requireSpaceMember = (req: any, spaceId: number): void => {
   if (!(req.currentUser.spaceIds || []).includes(Number(spaceId))) {
-    throw new AuthorizationError('このスペースにアクセスする権限がありません。');
+    throw new AuthorizationError('このプロジェクトにアクセスする権限がありません。');
   }
 };
 
@@ -44,7 +44,7 @@ const requireSpaceAdmin = async (req: any, spaceId: number): Promise<void> => {
   const space = await findEntityOrThrow(Space, spaceId, { relations: ['admins'] });
   const isSpaceAdmin = (space.adminIds || []).includes(req.currentUser.id);
   if (req.currentUser.role !== 'admin' && !isSpaceAdmin) {
-    throw new AuthorizationError('このスペースの管理者のみが実行できる操作です。');
+    throw new AuthorizationError('このプロジェクトの管理者のみが実行できる操作です。');
   }
 };
 

@@ -38,7 +38,7 @@ const UsersAdmin = () => {
     return (
       <Page>
         <Container>
-          <BackLink onClick={() => history.push('/spaces')}>← スペース一覧へ</BackLink>
+          <BackLink onClick={() => history.push('/spaces')}>← プロジェクト一覧へ</BackLink>
           <Title>ユーザー管理</Title>
           <Hint>このページは全体管理者のみが利用できます。</Hint>
         </Container>
@@ -59,17 +59,17 @@ const UsersAdmin = () => {
   };
 
   const renderPermission = user => {
-    if (user.role === 'admin') return <span>スペース作成可（管理者）</span>;
+    if (user.role === 'admin') return <span>プロジェクト作成可（管理者）</span>;
     if (user.canCreateSpace) {
       return (
         <Button variant="primary" onClick={() => setCanCreateSpace(user.id, false)}>
-          スペース作成: 許可中
+          プロジェクト作成: 許可中
         </Button>
       );
     }
     return (
       <Button variant="secondary" onClick={() => setCanCreateSpace(user.id, true)}>
-        スペース作成を許可
+        プロジェクト作成を許可
       </Button>
     );
   };
@@ -77,12 +77,12 @@ const UsersAdmin = () => {
   return (
     <Page>
       <Container>
-        <BackLink onClick={() => history.push('/spaces')}>← スペース一覧へ</BackLink>
+        <BackLink onClick={() => history.push('/spaces')}>← プロジェクト一覧へ</BackLink>
         <TopBar>
           <Title>ユーザー管理</Title>
         </TopBar>
         <Hint>
-          「スペース作成」を許可したユーザーだけが新しいスペースを作成できます。全体管理者は常に作成できます。
+          「プロジェクト作成」を許可したユーザーだけが新しいプロジェクトを作成できます。全体管理者は常に作成できます。
         </Hint>
 
         <UserList>

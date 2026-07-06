@@ -83,7 +83,7 @@ const SpacesList = () => {
     try {
       await api.delete(`/spaces/${spaceId}`);
       await fetchSpaces();
-      toast.success('スペースを削除しました。');
+      toast.success('プロジェクトを削除しました。');
     } catch (err) {
       toast.error(err);
     }
@@ -101,11 +101,11 @@ const SpacesList = () => {
     <Page>
       <Container>
         <TopBar>
-          <Title>スペース</Title>
+          <Title>プロジェクト</Title>
           <TopActions>
             {canCreateSpace && (
               <Button variant="primary" onClick={() => setCreateOpen(true)}>
-                スペースを作成
+                プロジェクトを作成
               </Button>
             )}
             {isGlobalAdmin && (
@@ -117,8 +117,8 @@ const SpacesList = () => {
 
         {spaces.length === 0 ? (
           <Empty>
-            参加しているスペースがありません。
-            {canCreateSpace && '「スペースを作成」から追加してください。'}
+            参加しているプロジェクトがありません。
+            {canCreateSpace && '「プロジェクトを作成」から追加してください。'}
           </Empty>
         ) : (
           <Grid>
@@ -128,7 +128,7 @@ const SpacesList = () => {
                   <DeleteButton onClick={e => e.stopPropagation()}>
                     <ConfirmModal
                       title={`「${space.name}」を削除しますか？`}
-                      message="スペースと、その中のすべてのボード・課題・データが削除されます。元に戻せません。"
+                      message="プロジェクトと、その中のすべてのボード・課題・データが削除されます。元に戻せません。"
                       confirmText="削除"
                       variant="danger"
                       onConfirm={({ close }) => handleDelete(space.id).then(close)}
@@ -141,7 +141,7 @@ const SpacesList = () => {
                 <ProjectAvatar name={space.name} icon={space.icon} avatarUrl={space.avatarUrl} />
                 <CardMeta>
                   <CardName>{space.name}</CardName>
-                  <CardSub>スペース</CardSub>
+                  <CardSub>プロジェクト</CardSub>
                 </CardMeta>
               </Card>
             ))}
@@ -176,7 +176,7 @@ const SpaceForm = ({ onSuccess }) => (
     onSubmit={async (values, form) => {
       try {
         await api.post('/spaces', values);
-        toast.success('スペースを作成しました。');
+        toast.success('プロジェクトを作成しました。');
         onSuccess();
       } catch (error) {
         Form.handleAPIError(error, form);
@@ -184,7 +184,7 @@ const SpaceForm = ({ onSuccess }) => (
     }}
   >
     <FormElement>
-      <FormHeading>スペースを作成</FormHeading>
+      <FormHeading>プロジェクトを作成</FormHeading>
       <Form.Field.Input name="name" label="名前" />
       <IconPicker />
       <Actions>

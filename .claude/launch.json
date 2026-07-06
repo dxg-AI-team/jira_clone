@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "client",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd /d C:\\Git\\jira_clone\\client && set NODE_OPTIONS=--openssl-legacy-provider && node_modules\\.bin\\webpack-dev-server"
+      ],
+      "port": 8080,
+      "autoPort": false
+    }
+  ]
+}

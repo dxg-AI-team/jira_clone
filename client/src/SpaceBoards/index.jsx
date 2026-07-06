@@ -89,12 +89,12 @@ const SpaceBoards = () => {
     if (error.code === 'ENTITY_NOT_FOUND' || error.status === 404) {
       return (
         <PageError
-          title="スペースが見つかりません"
+          title="プロジェクトが見つかりません"
           message={
             <p>
-              このスペースは削除されたか、URL が正しくない可能性があります。
+              このプロジェクトは削除されたか、URL が正しくない可能性があります。
               <br />
-              <Link to="/spaces">スペース一覧へ戻る</Link>
+              <Link to="/spaces">プロジェクト一覧へ戻る</Link>
             </p>
           }
         />
@@ -122,10 +122,10 @@ const SpaceBoards = () => {
     try {
       if (makeAdmin) {
         await api.post(`/spaces/${spaceId}/admins/${userId}`);
-        toast.success('スペース管理者にしました。');
+        toast.success('プロジェクト管理者にしました。');
       } else {
         await api.delete(`/spaces/${spaceId}/admins/${userId}`);
-        toast.success('スペース管理者を解除しました。');
+        toast.success('プロジェクト管理者を解除しました。');
       }
       await fetchSpace();
     } catch (err) {
@@ -158,7 +158,7 @@ const SpaceBoards = () => {
       <Container>
         <Breadcrumb>
           <Button variant="empty" onClick={() => history.push('/spaces')}>
-            スペース
+            プロジェクト
           </Button>
           {` / ${space.name}`}
         </Breadcrumb>
@@ -242,7 +242,7 @@ const SpaceBoards = () => {
                   <MemberEmail>{member.email}</MemberEmail>
                 </MemberMeta>
                 <RoleBadge admin={memberIsAdmin}>
-                  {memberIsAdmin ? 'スペース管理者' : 'メンバー'}
+                  {memberIsAdmin ? 'プロジェクト管理者' : 'メンバー'}
                 </RoleBadge>
                 {isAdmin && (
                   <MemberActions>
@@ -257,7 +257,7 @@ const SpaceBoards = () => {
                     )}
                     {currentUser.id !== member.id && (
                       <ConfirmModal
-                        title="このメンバーをスペースから外しますか？"
+                        title="このメンバーをプロジェクトから外しますか？"
                         message="ユーザー自体は削除されません。"
                         confirmText="外す"
                         variant="danger"
@@ -344,7 +344,7 @@ const SpaceEditForm = ({ spaceId, space, onSuccess }) => (
     onSubmit={async (values, form) => {
       try {
         await api.put(`/spaces/${spaceId}`, values);
-        toast.success('スペースを更新しました。');
+        toast.success('プロジェクトを更新しました。');
         onSuccess();
       } catch (error) {
         Form.handleAPIError(error, form);
@@ -352,7 +352,7 @@ const SpaceEditForm = ({ spaceId, space, onSuccess }) => (
     }}
   >
     <FormElement>
-      <FormHeading>スペースを編集</FormHeading>
+      <FormHeading>プロジェクトを編集</FormHeading>
       <Form.Field.Input name="name" label="名前" />
       <IconPicker />
       <Actions>
@@ -419,8 +419,8 @@ const BoardForm = ({ spaceId, onSuccess }) => (
       <Form.Field.Input name="name" label="名前" />
       <Form.Field.Input
         name="key"
-        label="プロジェクトキー"
-        tip="課題キーの接頭辞になります（例: ABC → ABC-1）。スペース内で重複できません。"
+        label="ボードキー"
+        tip="課題キーの接頭辞になります（例: ABC → ABC-1）。プロジェクト内で重複できません。"
       />
       <Form.Field.Select name="category" label="カテゴリ" options={categoryOptions} />
       <Actions>

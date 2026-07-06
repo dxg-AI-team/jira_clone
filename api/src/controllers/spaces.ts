@@ -7,7 +7,7 @@ import { sendInviteEmail } from 'utils/mail';
 
 const requireSpaceMember = (req: any, spaceId: number): void => {
   if (!(req.currentUser.spaceIds || []).includes(Number(spaceId))) {
-    throw new AuthorizationError('このスペースにアクセスする権限がありません。');
+    throw new AuthorizationError('このプロジェクトにアクセスする権限がありません。');
   }
 };
 
@@ -18,7 +18,7 @@ const requireSpaceAdmin = async (req: any, spaceId: number): Promise<Space> => {
   const space = await findEntityOrThrow(Space, spaceId, { relations: ['admins'] });
   const isSpaceAdmin = (space.adminIds || []).includes(req.currentUser.id);
   if (req.currentUser.role !== 'admin' && !isSpaceAdmin) {
-    throw new AuthorizationError('このスペースの管理者のみが実行できる操作です。');
+    throw new AuthorizationError('このプロジェクトの管理者のみが実行できる操作です。');
   }
   return space;
 };
@@ -47,7 +47,9 @@ export const getMySpaces = catchErrors(async (req, res) => {
 // canCreateSpace permission. The creator becomes the space's first member+admin.
 export const create = catchErrors(async (req, res) => {
   if (req.currentUser.role !== 'admin' && !req.currentUser.canCreateSpace) {
-    throw new AuthorizationError('スペースを作成する権限がありません。管理者に依頼してください。');
+    throw new AuthorizationError(
+      'プロジェクトを作成する権限がありません。管理者に依頼してください。',
+    );
   }
   const { name, icon, avatarUrl } = req.body;
   const space = await createEntity(Space, { name, icon, avatarUrl });
@@ -217,7 +219,7 @@ export const addAdmin = catchErrors(async (req, res) => {
 
   const space = await findEntityOrThrow(Space, spaceId, { relations: ['users'] });
   if (!space.users.some(u => u.id === userId)) {
-    throw new AuthorizationError('スペースのメンバーのみを管理者にできます。');
+    throw new AuthorizationError('プロジェクトのメンバーのみを管理者にできます。');
   }
   await addToRelation('admins', spaceId, userId);
   res.respond({ userId });
@@ -229,7 +231,7 @@ export const removeAdmin = catchErrors(async (req, res) => {
   const space = await requireSpaceAdmin(req, spaceId);
   const userId = Number(req.params.userId);
   if ((space.adminIds || []).length <= 1 && (space.adminIds || []).includes(userId)) {
-    throw new AuthorizationError('スペースには少なくとも1人の管理者が必要です。');
+    throw new AuthorizationError('プロジェクトには少なくとも1人の管理者が必要です。');
   }
   await removeFromRelation('admins', spaceId, userId);
   res.respond({ userId });

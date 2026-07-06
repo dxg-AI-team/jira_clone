@@ -40,7 +40,7 @@ const ProjectBoard = ({ project, fetchProject, updateLocalProjectIssues }) => {
     <Fragment>
       <Breadcrumbs
         items={[
-          project.space ? project.space.name : 'スペース',
+          project.space ? project.space.name : 'プロジェクト',
           project.name,
           activeSprint ? activeSprint.name : 'カンバンボード',
         ]}

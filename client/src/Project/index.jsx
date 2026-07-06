@@ -47,7 +47,7 @@ const Project = () => {
             <p>
               このボードは削除されたか、URL が正しくない可能性があります。
               <br />
-              <Link to="/spaces">スペース一覧へ戻る</Link>
+              <Link to="/spaces">プロジェクト一覧へ戻る</Link>
             </p>
           }
         />
@@ -61,7 +61,7 @@ const Project = () => {
             <p>
               このボードを表示する権限がありません。
               <br />
-              <Link to="/spaces">スペース一覧へ戻る</Link>
+              <Link to="/spaces">プロジェクト一覧へ戻る</Link>
             </p>
           }
         />

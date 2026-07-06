@@ -70,11 +70,11 @@ const ProjectSidebar = ({ project }) => {
             <SwitcherDivider />
             {spaceId && (
               <SwitcherFooter onClick={() => history.push(`/space/${spaceId}`)}>
-                スペースのボード一覧
+                プロジェクトのボード一覧
               </SwitcherFooter>
             )}
             <SwitcherFooter onClick={() => history.push('/spaces')}>
-              すべてのスペース
+              すべてのプロジェクト
             </SwitcherFooter>
           </SwitcherDropdown>
         )}

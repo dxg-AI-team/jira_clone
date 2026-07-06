@@ -168,7 +168,7 @@ const ProjectSummary = ({ project }) => {
   return (
     <Page>
       <Breadcrumbs
-        items={[project.space ? project.space.name : 'スペース', project.name, '要約']}
+        items={[project.space ? project.space.name : 'プロジェクト', project.name, '要約']}
       />
       <Title>要約</Title>
 
