@@ -79,10 +79,21 @@ export const getProjectWithUsersAndIssues = catchErrors(async (req, res) => {
   });
   // Members live on the space the board belongs to.
   const space = await findEntityOrThrow(Space, project.spaceId, { relations: ['users'] });
+
+  // The current user's role on this board's space, so the client can present a
+  // read-only experience to viewers (the API enforces it regardless).
+  const isSpaceAdmin =
+    req.currentUser.role === 'admin' || (space.adminIds || []).includes(req.currentUser.id);
+  const isViewer = (space.viewerIds || []).includes(req.currentUser.id);
+  let currentUserRole = 'member';
+  if (isSpaceAdmin) currentUserRole = 'admin';
+  else if (isViewer) currentUserRole = 'viewer';
+
   res.respond({
     project: {
       ...project,
       users: space.users,
+      currentUserRole,
       space: { id: space.id, name: space.name, icon: space.icon, avatarUrl: space.avatarUrl },
       issues: project.issues.map(issuePartial),
     },

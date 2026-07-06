@@ -11,6 +11,11 @@ import { NavLeft, LogoLink, StyledLogo, Bottom, Item, ItemText } from './Styles'
 const propTypes = {
   issueSearchModalOpen: PropTypes.func.isRequired,
   issueCreateModalOpen: PropTypes.func.isRequired,
+  canCreate: PropTypes.bool,
+};
+
+const defaultProps = {
+  canCreate: true,
 };
 
 const handleLogout = () => {
@@ -21,7 +26,7 @@ const handleLogout = () => {
   history.push('/authenticate');
 };
 
-const ProjectNavbarLeft = ({ issueSearchModalOpen, issueCreateModalOpen }) => (
+const ProjectNavbarLeft = ({ issueSearchModalOpen, issueCreateModalOpen, canCreate }) => (
   <NavLeft>
     <LogoLink to="/">
       <StyledLogo color="#fff" />
@@ -32,10 +37,12 @@ const ProjectNavbarLeft = ({ issueSearchModalOpen, issueCreateModalOpen }) => (
       <ItemText>課題を検索</ItemText>
     </Item>
 
-    <Item onClick={issueCreateModalOpen}>
-      <Icon type="plus" size={27} />
-      <ItemText>課題を作成</ItemText>
-    </Item>
+    {canCreate && (
+      <Item onClick={issueCreateModalOpen}>
+        <Icon type="plus" size={27} />
+        <ItemText>課題を作成</ItemText>
+      </Item>
+    )}
 
     <Notifications />
 
@@ -59,5 +66,6 @@ const ProjectNavbarLeft = ({ issueSearchModalOpen, issueCreateModalOpen }) => (
 );
 
 ProjectNavbarLeft.propTypes = propTypes;
+ProjectNavbarLeft.defaultProps = defaultProps;
 
 export default ProjectNavbarLeft;

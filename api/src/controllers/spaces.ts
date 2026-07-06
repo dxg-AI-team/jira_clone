@@ -84,7 +84,7 @@ export const getSpace = catchErrors(async (req, res) => {
   const spaceId = Number(req.params.spaceId);
   requireSpaceMember(req, spaceId);
   const space = await findEntityOrThrow(Space, spaceId, {
-    relations: ['users', 'admins', 'boards'],
+    relations: ['users', 'admins', 'viewers', 'boards'],
   });
   res.respond({ space });
 });
@@ -231,8 +231,9 @@ export const removeMember = catchErrors(async (req, res) => {
   await requireSpaceAdmin(req, spaceId);
   const userId = Number(req.params.userId);
   await removeFromRelation('users', spaceId, userId);
-  // A removed member can't remain a space admin.
+  // A removed member can't remain a space admin or viewer.
   await removeFromRelation('admins', spaceId, userId);
+  await removeFromRelation('viewers', spaceId, userId);
   res.respond({ userId });
 });
 
@@ -260,4 +261,37 @@ export const removeAdmin = catchErrors(async (req, res) => {
   }
   await removeFromRelation('admins', spaceId, userId);
   res.respond({ userId });
+});
+
+// Set a member's project role: 'admin' | 'member' | 'viewer'. `admin` and
+// `viewer` are mutually exclusive; `member` clears both. The last admin cannot
+// be demoted.
+export const setMemberRole = catchErrors(async (req, res) => {
+  const spaceId = Number(req.params.spaceId);
+  const space = await requireSpaceAdmin(req, spaceId);
+  const userId = Number(req.params.userId);
+  const { role } = req.body;
+
+  if (!['admin', 'member', 'viewer'].includes(role)) {
+    throw new BadUserInputError({ fields: { role: '不正なロールです。' } });
+  }
+
+  const full = await findEntityOrThrow(Space, spaceId, { relations: ['users'] });
+  if (!full.users.some(u => u.id === userId)) {
+    throw new AuthorizationError('プロジェクトのメンバーのロールのみ変更できます。');
+  }
+
+  const adminIds = space.adminIds || [];
+  if (role !== 'admin' && adminIds.includes(userId) && adminIds.length <= 1) {
+    throw new AuthorizationError('プロジェクトには少なくとも1人の管理者が必要です。');
+  }
+
+  // Reset both role relations first so the operations stay idempotent (no
+  // duplicate-key errors when re-applying the same role).
+  await removeFromRelation('admins', spaceId, userId);
+  await removeFromRelation('viewers', spaceId, userId);
+  if (role === 'admin') await addToRelation('admins', spaceId, userId);
+  else if (role === 'viewer') await addToRelation('viewers', spaceId, userId);
+
+  res.respond({ userId, role });
 });

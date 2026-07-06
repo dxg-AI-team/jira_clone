@@ -87,6 +87,7 @@ const Project = () => {
       <NavbarLeft
         issueSearchModalOpen={issueSearchModalHelpers.open}
         issueCreateModalOpen={issueCreateModalHelpers.open}
+        canCreate={project.currentUserRole !== 'viewer'}
       />
 
       <Sidebar project={project} />

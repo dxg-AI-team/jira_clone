@@ -110,6 +110,8 @@ export const remove = catchErrors(async (req, res) => {
   await connection.query('DELETE FROM comment WHERE "userId" = $1', [targetId]);
   await connection.query('DELETE FROM issue_users_user WHERE "userId" = $1', [targetId]);
   await connection.query('DELETE FROM space_users_user WHERE "userId" = $1', [targetId]);
+  await connection.query('DELETE FROM space_admins_user WHERE "userId" = $1', [targetId]);
+  await connection.query('DELETE FROM space_viewers_user WHERE "userId" = $1', [targetId]);
 
   const user = await deleteEntity(User, targetId);
   res.respond({ user });

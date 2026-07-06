@@ -9,6 +9,7 @@ import { backfillKeys } from 'database/backfillKeys';
 import { addRespondToResponse } from 'middleware/response';
 import { authenticateUser } from 'middleware/authentication';
 import { selectProject } from 'middleware/selectProject';
+import { enforceProjectRole } from 'middleware/enforceProjectRole';
 import { handleError } from 'middleware/errors';
 import { RouteNotFoundError } from 'errors';
 
@@ -37,6 +38,7 @@ const initializeExpress = (): void => {
 
   app.use('/', authenticateUser);
   app.use('/', selectProject);
+  app.use('/', enforceProjectRole);
 
   attachPrivateRoutes(app);
 

@@ -42,6 +42,7 @@ import {
   MemberName,
   MemberEmail,
   RoleBadge,
+  RoleSelect,
   MemberActions,
   FormHeading,
   FormElement,
@@ -56,6 +57,12 @@ const categoryOptions = Object.values(ProjectCategory).map(category => ({
 }));
 
 const iconOptions = ['🏢', '🚀', '🐞', '💼', '🎨', '⚙️', '📊', '🔧', '🌟', '📁', '💡', '🧩'];
+
+const roleLabel = role => {
+  if (role === 'admin') return 'プロジェクト管理者';
+  if (role === 'viewer') return '閲覧者';
+  return 'メンバー';
+};
 
 const IconPicker = () => {
   const { values, setFieldValue } = useFormikContext();
@@ -109,9 +116,17 @@ const SpaceBoards = () => {
 
   const currentUser = currentUserData && currentUserData.currentUser;
   const adminIds = space.adminIds || [];
+  const viewerIds = space.viewerIds || [];
   // Space-level admin: a global admin or a member listed in the space's admins.
   const isAdmin =
     !!currentUser && (currentUser.role === 'admin' || adminIds.includes(currentUser.id));
+
+  // A member's project role: admin > viewer > member (regular editing member).
+  const roleOf = userId => {
+    if (adminIds.includes(userId)) return 'admin';
+    if (viewerIds.includes(userId)) return 'viewer';
+    return 'member';
+  };
   const boards = space.boards || [];
   const members = space.users || [];
 
@@ -119,15 +134,10 @@ const SpaceBoards = () => {
     await fetchSpace();
   };
 
-  const setAdmin = async (userId, makeAdmin) => {
+  const setRole = async (userId, role) => {
     try {
-      if (makeAdmin) {
-        await api.post(`/spaces/${spaceId}/admins/${userId}`);
-        toast.success('プロジェクト管理者にしました。');
-      } else {
-        await api.delete(`/spaces/${spaceId}/admins/${userId}`);
-        toast.success('プロジェクト管理者を解除しました。');
-      }
+      await api.put(`/spaces/${spaceId}/members/${userId}/role`, { role });
+      toast.success('ロールを変更しました。');
       await fetchSpace();
     } catch (err) {
       toast.error(err);
@@ -235,7 +245,7 @@ const SpaceBoards = () => {
 
         <MemberList>
           {members.map(member => {
-            const memberIsAdmin = adminIds.includes(member.id);
+            const memberRole = roleOf(member.id);
             return (
               <MemberRow key={member.id}>
                 <Avatar size={32} avatarUrl={member.avatarUrl} name={member.name} />
@@ -243,20 +253,17 @@ const SpaceBoards = () => {
                   <MemberName>{member.name}</MemberName>
                   <MemberEmail>{member.email}</MemberEmail>
                 </MemberMeta>
-                <RoleBadge admin={memberIsAdmin}>
-                  {memberIsAdmin ? 'プロジェクト管理者' : 'メンバー'}
-                </RoleBadge>
+                <RoleBadge role={memberRole}>{roleLabel(memberRole)}</RoleBadge>
                 {isAdmin && (
                   <MemberActions>
-                    {memberIsAdmin ? (
-                      <Button variant="empty" onClick={() => setAdmin(member.id, false)}>
-                        管理者を解除
-                      </Button>
-                    ) : (
-                      <Button variant="empty" onClick={() => setAdmin(member.id, true)}>
-                        管理者にする
-                      </Button>
-                    )}
+                    <RoleSelect
+                      value={memberRole}
+                      onChange={event => setRole(member.id, event.target.value)}
+                    >
+                      <option value="admin">管理者</option>
+                      <option value="member">メンバー</option>
+                      <option value="viewer">閲覧者</option>
+                    </RoleSelect>
                     {currentUser.id !== member.id && (
                       <ConfirmModal
                         title="このメンバーをプロジェクトから外しますか？"

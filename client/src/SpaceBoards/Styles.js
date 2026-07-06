@@ -141,14 +141,35 @@ export const MemberMeta = styled.div`
   min-width: 0;
 `;
 
+const roleBadgeColors = role => {
+  if (role === 'admin') return { fg: '#fff', bg: color.primary };
+  if (role === 'viewer') return { fg: color.textMedium, bg: color.backgroundLight };
+  return { fg: color.textMedium, bg: color.backgroundMedium };
+};
+
 export const RoleBadge = styled.span`
   margin-right: 10px;
   padding: 2px 9px;
   border-radius: 11px;
   ${font.size(12)}
   ${font.medium}
-  color: ${props => (props.admin ? '#fff' : color.textMedium)};
-  background: ${props => (props.admin ? color.primary : color.backgroundMedium)};
+  color: ${props => roleBadgeColors(props.role).fg};
+  background: ${props => roleBadgeColors(props.role).bg};
+`;
+
+export const RoleSelect = styled.select`
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid ${color.borderLight};
+  border-radius: 4px;
+  ${font.size(13.5)}
+  color: ${color.textDark};
+  background: #fff;
+  cursor: pointer;
+  &:focus {
+    outline: none;
+    border-color: ${color.borderInputFocus};
+  }
 `;
 
 export const MemberActions = styled.div`

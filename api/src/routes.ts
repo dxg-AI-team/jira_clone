@@ -67,6 +67,7 @@ export const attachPrivateRoutes = (app: any): void => {
   app.delete('/spaces/:spaceId/members/:userId', spaces.removeMember);
   app.post('/spaces/:spaceId/admins/:userId', spaces.addAdmin);
   app.delete('/spaces/:spaceId/admins/:userId', spaces.removeAdmin);
+  app.put('/spaces/:spaceId/members/:userId/role', spaces.setMemberRole);
 
   app.get('/boards', projects.getSpaceBoards);
   app.post('/projects', projects.create);

@@ -63,6 +63,16 @@ class Space extends BaseEntity {
   @RelationId((space: Space) => space.admins)
   adminIds: number[];
 
+  // Read-only members (a subset of users). A viewer can browse the space's
+  // boards and issues but cannot create or edit content. Mutually exclusive
+  // with `admins`; a member listed in neither is a regular (editing) member.
+  @ManyToMany(() => User)
+  @JoinTable({ name: 'space_viewers_user' })
+  viewers: User[];
+
+  @RelationId((space: Space) => space.viewers)
+  viewerIds: number[];
+
   @OneToMany(
     () => Project,
     project => project.space,
