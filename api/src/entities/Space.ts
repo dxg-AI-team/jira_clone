@@ -2,6 +2,7 @@ import {
   BaseEntity,
   Entity,
   Column,
+  Index,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
@@ -15,6 +16,11 @@ import is from 'utils/validation';
 import { User, Project } from '.';
 
 @Entity()
+// The project key is a short uppercase identifier unique across all projects
+// (like a Jira project key), used to tell projects apart. Nullable in the
+// schema so synchronize can add the column to existing rows; a startup backfill
+// then assigns a unique key to every project.
+@Index(['key'], { unique: true })
 class Space extends BaseEntity {
   static validations = {
     name: [is.required(), is.maxLength(50)],
@@ -25,6 +31,9 @@ class Space extends BaseEntity {
 
   @Column('varchar')
   name: string;
+
+  @Column('varchar', { length: 10, nullable: true })
+  key: string | null;
 
   @Column('varchar', { nullable: true })
   icon: string | null;

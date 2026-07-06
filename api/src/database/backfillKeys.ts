@@ -1,12 +1,23 @@
 import { getConnection } from 'typeorm';
 
-import { Project } from 'entities';
+import { Project, Space } from 'entities';
 import { deriveKeyFromName, ensureUniqueKey } from 'utils/projectKey';
 
 // One-time migration for the project-key / issue-number feature: assign a unique
 // key to every legacy board and a per-board sequential number to every legacy
 // issue. Safe to run on every boot — it only touches rows that are still null.
 export const backfillKeys = async (): Promise<void> => {
+  // 0) Project (top-level) keys, unique across all projects.
+  const spaces = await Space.find({ order: { id: 'ASC' } });
+  const takenSpaceKeys = new Set<string>(spaces.filter(s => s.key).map(s => s.key as string));
+  const spacesNeedingKey = spaces.filter(s => !s.key);
+  for (const space of spacesNeedingKey) {
+    const key = ensureUniqueKey(deriveKeyFromName(space.name), takenSpaceKeys);
+    takenSpaceKeys.add(key);
+    space.key = key;
+    await space.save();
+  }
+
   // 1) Board keys, unique within each space.
   const boards = await Project.find({ order: { id: 'ASC' } });
   const takenBySpace = new Map<number, Set<string>>();
@@ -54,9 +65,9 @@ export const backfillKeys = async (): Promise<void> => {
     }
   }
 
-  if (boardsNeedingKey.length || projectRows.length) {
+  if (spacesNeedingKey.length || boardsNeedingKey.length || projectRows.length) {
     console.log(
-      `[backfillKeys] assigned keys to ${boardsNeedingKey.length} board(s), numbered issues in ${projectRows.length} board(s).`,
+      `[backfillKeys] assigned keys to ${spacesNeedingKey.length} project(s) and ${boardsNeedingKey.length} board(s), numbered issues in ${projectRows.length} board(s).`,
     );
   }
 };

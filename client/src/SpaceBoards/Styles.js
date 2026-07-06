@@ -46,6 +46,12 @@ export const SpaceName = styled.h1`
   ${mixin.truncateText}
 `;
 
+export const SpaceKey = styled.div`
+  margin-top: 2px;
+  ${font.size(13)}
+  color: ${color.textMedium};
+`;
+
 export const SectionHead = styled.div`
   display: flex;
   align-items: center;

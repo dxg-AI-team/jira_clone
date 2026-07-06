@@ -26,6 +26,7 @@ import {
   Header,
   HeaderMeta,
   SpaceName,
+  SpaceKey,
   SectionHead,
   SectionTitle,
   Grid,
@@ -172,6 +173,7 @@ const SpaceBoards = () => {
           />
           <HeaderMeta>
             <SpaceName>{space.name}</SpaceName>
+            {space.key && <SpaceKey>プロジェクトキー: {space.key}</SpaceKey>}
           </HeaderMeta>
           {isAdmin && (
             <Button variant="secondary" icon="settings" onClick={() => setEditOpen(true)}>
@@ -338,12 +340,19 @@ const SpaceEditForm = ({ spaceId, space, onSuccess }) => (
     enableReinitialize
     initialValues={Form.initialValues(space, get => ({
       name: get('name', ''),
+      key: get('key', ''),
       icon: get('icon', null),
     }))}
-    validations={{ name: [Form.is.required(), Form.is.maxLength(50)] }}
+    validations={{
+      name: [Form.is.required(), Form.is.maxLength(50)],
+      key: [
+        Form.is.required(),
+        Form.is.match(isValidKey, '英大文字で始まる2〜10文字の英数字で入力してください（例: ABC）'),
+      ],
+    }}
     onSubmit={async (values, form) => {
       try {
-        await api.put(`/spaces/${spaceId}`, values);
+        await api.put(`/spaces/${spaceId}`, { ...values, key: normalizeKey(values.key) });
         toast.success('プロジェクトを更新しました。');
         onSuccess();
       } catch (error) {
@@ -354,6 +363,11 @@ const SpaceEditForm = ({ spaceId, space, onSuccess }) => (
     <FormElement>
       <FormHeading>プロジェクトを編集</FormHeading>
       <Form.Field.Input name="name" label="名前" />
+      <Form.Field.Input
+        name="key"
+        label="プロジェクトキー"
+        tip="プロジェクトを識別する短いキーです（例: ABC）。全プロジェクトで重複できません。"
+      />
       <IconPicker />
       <Actions>
         <Button type="submit" variant="primary">

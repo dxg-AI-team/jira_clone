@@ -1,9 +1,30 @@
-import { getConnection } from 'typeorm';
+import { getConnection, Not } from 'typeorm';
 
 import { Space, User } from 'entities';
 import { catchErrors, AuthorizationError, BadUserInputError } from 'errors';
 import { createEntity, updateEntity, findEntityOrThrow } from 'utils/typeorm';
+import { normalizeKey, isValidKey } from 'utils/projectKey';
 import { sendInviteEmail } from 'utils/mail';
+
+// Validate and normalize a project key, ensuring it is unique across all
+// projects. Throws a field-level error so the form can highlight the key input.
+const resolveSpaceKey = async (raw: unknown, excludeSpaceId?: number): Promise<string> => {
+  const key = normalizeKey(raw);
+  if (!isValidKey(key)) {
+    throw new BadUserInputError({
+      fields: { key: 'キーは英大文字で始まる2〜10文字の英数字で入力してください（例: ABC）。' },
+    });
+  }
+  const where: { key: string; id?: any } = { key };
+  if (excludeSpaceId) where.id = Not(excludeSpaceId);
+  const existing = await Space.findOne({ where });
+  if (existing) {
+    throw new BadUserInputError({
+      fields: { key: `キー「${key}」は既に使われています。` },
+    });
+  }
+  return key;
+};
 
 const requireSpaceMember = (req: any, spaceId: number): void => {
   if (!(req.currentUser.spaceIds || []).includes(Number(spaceId))) {
@@ -51,8 +72,9 @@ export const create = catchErrors(async (req, res) => {
       'プロジェクトを作成する権限がありません。管理者に依頼してください。',
     );
   }
-  const { name, icon, avatarUrl } = req.body;
-  const space = await createEntity(Space, { name, icon, avatarUrl });
+  const { name, icon, avatarUrl, key } = req.body;
+  const resolvedKey = await resolveSpaceKey(key);
+  const space = await createEntity(Space, { name, icon, avatarUrl, key: resolvedKey });
   await addToRelation('users', space.id, req.currentUser.id);
   await addToRelation('admins', space.id, req.currentUser.id);
   res.respond({ space });
@@ -70,6 +92,9 @@ export const getSpace = catchErrors(async (req, res) => {
 export const update = catchErrors(async (req, res) => {
   const spaceId = Number(req.params.spaceId);
   await requireSpaceAdmin(req, spaceId);
+  if (req.body.key !== undefined) {
+    req.body.key = await resolveSpaceKey(req.body.key, spaceId);
+  }
   const space = await updateEntity(Space, spaceId, req.body);
   res.respond({ space });
 });

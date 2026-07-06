@@ -8,6 +8,7 @@ import toast from 'shared/utils/toast';
 import useApi from 'shared/hooks/api';
 import { removeStoredAuthToken } from 'shared/utils/authToken';
 import { setCurrentProjectId } from 'shared/utils/currentProject';
+import { normalizeKey, isValidKey, suggestKey } from 'shared/utils/projectKey';
 import {
   Button,
   ConfirmModal,
@@ -141,7 +142,7 @@ const SpacesList = () => {
                 <ProjectAvatar name={space.name} icon={space.icon} avatarUrl={space.avatarUrl} />
                 <CardMeta>
                   <CardName>{space.name}</CardName>
-                  <CardSub>プロジェクト</CardSub>
+                  <CardSub>{space.key ? `${space.key} ・ プロジェクト` : 'プロジェクト'}</CardSub>
                 </CardMeta>
               </Card>
             ))}
@@ -169,13 +170,42 @@ const SpacesList = () => {
   );
 };
 
+// Normalize the key field and auto-suggest it from the project name until the
+// user edits the key themselves.
+const SpaceKeyEffects = () => {
+  const { values, setFieldValue } = useFormikContext();
+  const lastSuggested = React.useRef('');
+
+  React.useEffect(() => {
+    const normalized = normalizeKey(values.key);
+    if (normalized !== values.key) setFieldValue('key', normalized);
+  }, [values.key, setFieldValue]);
+
+  React.useEffect(() => {
+    if (values.key === lastSuggested.current) {
+      const suggestion = suggestKey(values.name);
+      lastSuggested.current = suggestion;
+      setFieldValue('key', suggestion);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.name]);
+
+  return null;
+};
+
 const SpaceForm = ({ onSuccess }) => (
   <Form
-    initialValues={{ name: '', icon: '🏢' }}
-    validations={{ name: [Form.is.required(), Form.is.maxLength(50)] }}
+    initialValues={{ name: '', key: '', icon: '🏢' }}
+    validations={{
+      name: [Form.is.required(), Form.is.maxLength(50)],
+      key: [
+        Form.is.required(),
+        Form.is.match(isValidKey, '英大文字で始まる2〜10文字の英数字で入力してください（例: ABC）'),
+      ],
+    }}
     onSubmit={async (values, form) => {
       try {
-        await api.post('/spaces', values);
+        await api.post('/spaces', { ...values, key: normalizeKey(values.key) });
         toast.success('プロジェクトを作成しました。');
         onSuccess();
       } catch (error) {
@@ -184,8 +214,14 @@ const SpaceForm = ({ onSuccess }) => (
     }}
   >
     <FormElement>
+      <SpaceKeyEffects />
       <FormHeading>プロジェクトを作成</FormHeading>
       <Form.Field.Input name="name" label="名前" />
+      <Form.Field.Input
+        name="key"
+        label="プロジェクトキー"
+        tip="プロジェクトを識別する短いキーです（例: ABC）。全プロジェクトで重複できません。"
+      />
       <IconPicker />
       <Actions>
         <Button type="submit" variant="primary">
