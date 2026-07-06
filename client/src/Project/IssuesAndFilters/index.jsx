@@ -32,6 +32,10 @@ import {
   FilterBar,
   SearchBox,
   FilterItem,
+  DateRange,
+  DateLabel,
+  DateInput,
+  DateSep,
   ClearButton,
   RowSubMeta,
   SavedBar,
@@ -59,8 +63,13 @@ const defaultFilters = {
   statuses: [],
   priorities: [],
   userIds: [],
+  reporterId: null,
+  labels: [],
   versionId: null,
   componentIds: [],
+  sprintId: null,
+  createdFrom: '',
+  createdTo: '',
   sort: 'created-desc',
 };
 
@@ -172,14 +181,22 @@ const ProjectIssuesAndFilters = ({ project }) => {
 
   const userById = id => (project.users || []).find(u => u.id === id);
 
+  // All labels currently used on the board, for the label filter.
+  const allLabels = [...new Set((project.issues || []).flatMap(i => i.labels || []))].sort();
+
   const isFiltered = Boolean(
     filters.searchTerm ||
       filters.types.length ||
       filters.statuses.length ||
       filters.priorities.length ||
       filters.userIds.length ||
+      filters.reporterId ||
+      filters.labels.length ||
       filters.versionId ||
-      filters.componentIds.length,
+      filters.componentIds.length ||
+      filters.sprintId ||
+      filters.createdFrom ||
+      filters.createdTo,
   );
 
   return (
@@ -236,6 +253,25 @@ const ProjectIssuesAndFilters = ({ project }) => {
         </FilterItem>
         <FilterItem>
           <Select
+            placeholder="報告者"
+            value={filters.reporterId || undefined}
+            options={(project.users || []).map(user => ({ value: user.id, label: user.name }))}
+            onChange={reporterId => mergeFilters({ reporterId: reporterId || null })}
+          />
+        </FilterItem>
+        {allLabels.length > 0 && (
+          <FilterItem>
+            <Select
+              isMulti
+              placeholder="ラベル"
+              value={filters.labels}
+              options={allLabels.map(label => ({ value: label, label }))}
+              onChange={labels => mergeFilters({ labels })}
+            />
+          </FilterItem>
+        )}
+        <FilterItem>
+          <Select
             placeholder="リリース"
             value={filters.versionId || undefined}
             options={(project.versions || []).map(v => ({ value: v.id, label: v.name }))}
@@ -251,6 +287,35 @@ const ProjectIssuesAndFilters = ({ project }) => {
             onChange={componentIds => mergeFilters({ componentIds })}
           />
         </FilterItem>
+        {(project.sprints || []).length > 0 && (
+          <FilterItem>
+            <Select
+              placeholder="スプリント"
+              value={filters.sprintId || undefined}
+              options={[
+                { value: 'none', label: 'スプリントなし' },
+                ...(project.sprints || []).map(s => ({ value: s.id, label: s.name })),
+              ]}
+              onChange={sprintId => mergeFilters({ sprintId: sprintId || null })}
+            />
+          </FilterItem>
+        )}
+        <DateRange>
+          <DateLabel>作成日</DateLabel>
+          <DateInput
+            type="date"
+            value={filters.createdFrom}
+            max={filters.createdTo || undefined}
+            onChange={e => mergeFilters({ createdFrom: e.target.value })}
+          />
+          <DateSep>〜</DateSep>
+          <DateInput
+            type="date"
+            value={filters.createdTo}
+            min={filters.createdFrom || undefined}
+            onChange={e => mergeFilters({ createdTo: e.target.value })}
+          />
+        </DateRange>
         <FilterItem>
           <Select
             withClearValue={false}
@@ -375,8 +440,13 @@ const filterAndSortIssues = (allIssues, filters) => {
     statuses,
     priorities,
     userIds,
+    reporterId,
+    labels,
     versionId,
     componentIds,
+    sprintId,
+    createdFrom,
+    createdTo,
     sort,
   } = filters;
 
@@ -397,6 +467,12 @@ const filterAndSortIssues = (allIssues, filters) => {
   if (userIds.length) {
     issues = issues.filter(issue => intersection(issue.userIds || [], userIds).length > 0);
   }
+  if (reporterId) {
+    issues = issues.filter(issue => issue.reporterId === reporterId);
+  }
+  if (labels.length) {
+    issues = issues.filter(issue => intersection(issue.labels || [], labels).length > 0);
+  }
   if (versionId) {
     issues = issues.filter(issue => issue.versionId === versionId);
   }
@@ -404,6 +480,21 @@ const filterAndSortIssues = (allIssues, filters) => {
     issues = issues.filter(
       issue => intersection(issue.componentIds || [], componentIds).length > 0,
     );
+  }
+  if (sprintId) {
+    issues = issues.filter(issue =>
+      sprintId === 'none' ? !issue.sprintId : issue.sprintId === sprintId,
+    );
+  }
+  if (createdFrom) {
+    const from = new Date(createdFrom);
+    issues = issues.filter(issue => new Date(issue.createdAt) >= from);
+  }
+  if (createdTo) {
+    // Include the whole "to" day.
+    const to = new Date(createdTo);
+    to.setHours(23, 59, 59, 999);
+    issues = issues.filter(issue => new Date(issue.createdAt) <= to);
   }
 
   return [...issues].sort(sorters[sort] || sorters['created-desc']);

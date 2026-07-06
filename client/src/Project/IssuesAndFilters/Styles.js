@@ -113,6 +113,35 @@ export const FilterItem = styled.div`
   min-width: 150px;
 `;
 
+export const DateRange = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+export const DateLabel = styled.span`
+  margin-right: 8px;
+  ${font.size(13.5)}
+  color: ${color.textMedium};
+`;
+
+export const DateInput = styled.input`
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid ${color.borderLight};
+  border-radius: 4px;
+  ${font.size(13.5)}
+  color: ${color.textDark};
+  &:focus {
+    outline: none;
+    border-color: ${color.borderInputFocus};
+  }
+`;
+
+export const DateSep = styled.span`
+  margin: 0 6px;
+  color: ${color.textMedium};
+`;
+
 export const ClearButton = styled.div`
   margin-top: 6px;
   padding: 6px 4px;
