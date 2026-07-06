@@ -50,3 +50,31 @@ export const sendInviteEmail = async (
     return false;
   }
 };
+
+// Notify a mentioned member by email. Best-effort: returns true on success,
+// false if SMTP isn't configured or sending failed (never throws).
+export const sendMentionEmail = async (
+  to: string,
+  actorName: string,
+  issueTitle: string,
+  issueUrl: string,
+): Promise<boolean> => {
+  if (!transporter || !to) return false;
+
+  const subject = `${actorName} さんがコメントであなたにメンションしました`;
+  const text =
+    `${actorName} さんが課題「${issueTitle}」のコメントであなたにメンションしました。\n\n` +
+    `${issueUrl}\n`;
+  const html =
+    `<p>${actorName} さんが課題「<b>${issueTitle}</b>」のコメントであなたにメンションしました。</p>` +
+    `<p><a href="${issueUrl}">${issueUrl}</a></p>`;
+
+  try {
+    await transporter.sendMail({ from: SMTP_FROM || SMTP_USER, to, subject, text, html });
+    return true;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log('Failed to send mention email:', error);
+    return false;
+  }
+};
