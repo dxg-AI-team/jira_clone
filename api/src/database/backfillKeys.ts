@@ -12,7 +12,7 @@ export const backfillKeys = async (): Promise<void> => {
   const takenSpaceKeys = new Set<string>(spaces.filter(s => s.key).map(s => s.key as string));
   const spacesNeedingKey = spaces.filter(s => !s.key);
   for (const space of spacesNeedingKey) {
-    const key = ensureUniqueKey(deriveKeyFromName(space.name), takenSpaceKeys);
+    const key = ensureUniqueKey(deriveKeyFromName(space.name, 'PROJ'), takenSpaceKeys);
     takenSpaceKeys.add(key);
     space.key = key;
     await space.save();

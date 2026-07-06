@@ -17,10 +17,10 @@ export const isValidKey = (key: string): boolean => KEY_PATTERN.test(key);
 // Best-effort key suggestion from a board name (used for backfilling existing
 // boards). Falls back to "BOARD" when the name has no usable ASCII letters
 // (e.g. a Japanese-only name).
-export const deriveKeyFromName = (name: string): string => {
+export const deriveKeyFromName = (name: string, fallback = 'BOARD'): string => {
   const base = normalizeKey(name).slice(0, 4);
   if (base.length >= KEY_MIN && /^[A-Z]/.test(base)) return base;
-  return 'BOARD';
+  return fallback;
 };
 
 // Return `candidate` if free, otherwise append an incrementing suffix until the
